@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QPSK MEO Space-Based Inter-Satellite Link Block Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .orbit-badge {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .orbit-badge span {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .diagram-container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tx-title { color: #4ade80; }
+        .channel-title { color: #fbbf24; }
+        .rx-title { color: #f87171; }
+        .space-title { color: #a78bfa; }
+
+        .blocks-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
+        .block {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 105px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        .block-small {
+            min-width: 90px;
+            padding: 8px 10px;
+        }
+        .tx-block { border-color: #4ade80; }
+        .tx-block:hover { box-shadow: 0 10px 30px rgba(74, 222, 128, 0.2); }
+        .channel-block { border-color: #fbbf24; }
+        .channel-block:hover { box-shadow: 0 10px 30px rgba(251, 191, 36, 0.2); }
+        .rx-block { border-color: #f87171; }
+        .rx-block:hover { box-shadow: 0 10px 30px rgba(248, 113, 113, 0.2); }
+        .space-block { border-color: #a78bfa; background: linear-gradient(145deg, #3d2d58, #1a1a2c); }
+        .space-block:hover { box-shadow: 0 10px 30px rgba(167, 139, 250, 0.2); }
+
+        .block-name {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .block-detail {
+            font-size: 9px;
+            color: #94a3b8;
+        }
+        .python-func {
+            font-size: 8px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            margin-top: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .arrow {
+            font-size: 20px;
+            color: #64748b;
+            min-width: 20px;
+            text-align: center;
+        }
+        .signal-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: -3px;
+            font-style: italic;
+        }
+
+        /* Satellite SVG */
+        .satellite-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        /* Space visualization */
+        .space-vis {
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .space-vis::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(2px 2px at 20px 30px, white, transparent),
+                              radial-gradient(2px 2px at 40px 70px, white, transparent),
+                              radial-gradient(1px 1px at 90px 40px, white, transparent),
+                              radial-gradient(2px 2px at 130px 80px, white, transparent),
+                              radial-gradient(1px 1px at 160px 30px, white, transparent);
+            background-size: 200px 100px;
+            opacity: 0.3;
+        }
+        .earth-icon {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(180deg, #4ade80 0%, #2563eb 50%, #1e40af 100%);
+            border-radius: 80px 80px 0 0;
+            opacity: 0.6;
+        }
+        .orbit-path {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 60px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        /* Constellation */
+        .constellation {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .constellation-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            flex: 1;
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .constellation-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        /* QPSK Constellation */
+        .qpsk-constellation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            position: relative;
+        }
+        .qpsk-diagram {
+            position: relative;
+            width: 180px;
+            height: 180px;
+        }
+        .qpsk-axis {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .qpsk-axis-h {
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+        .qpsk-axis-v {
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            transform: translateX(-50%);
+        }
+        .qpsk-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            font-weight: bold;
+        }
+        .qpsk-point-00 {
+            top: 25%;
+            left: 25%;
+            background: #ef4444;
+        }
+        .qpsk-point-01 {
+            top: 25%;
+            left: 75%;
+            background: #4ade80;
+        }
+        .qpsk-point-10 {
+            top: 75%;
+            left: 25%;
+            background: #fbbf24;
+        }
+        .qpsk-point-11 {
+            top: 75%;
+            left: 75%;
+            background: #60a5fa;
+        }
+        .qpsk-label {
+            position: absolute;
+            font-size: 9px;
+            color: #94a3b8;
+            font-family: 'Courier New', monospace;
+        }
+        .qpsk-label-00 { top: 12%; left: 25%; transform: translateX(-50%); }
+        .qpsk-label-01 { top: 12%; left: 75%; transform: translateX(-50%); }
+        .qpsk-label-10 { top: 88%; left: 25%; transform: translateX(-50%); }
+        .qpsk-label-11 { top: 88%; left: 75%; transform: translateX(-50%); }
+        .qpsk-phase-label {
+            position: absolute;
+            font-size: 8px;
+            color: #60a5fa;
+        }
+        .qpsk-phase-00 { top: 32%; left: 18%; }
+        .qpsk-phase-01 { top: 32%; left: 72%; }
+        .qpsk-phase-10 { top: 68%; left: 18%; }
+        .qpsk-phase-11 { top: 68%; left: 72%; }
+        .axis-label {
+            position: absolute;
+            font-size: 10px;
+            color: #64748b;
+        }
+        .axis-label-i { right: 5px; top: 45%; }
+        .axis-label-q { left: 48%; top: 5px; }
+
+        /* Python Code Section */
+        .code-section {
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .code-block pre {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #c9d1d9;
+        }
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-number { color: #79c0ff; }
+        .code-class { color: #ffa657; }
+
+        /* Parameters Table */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        .params-table th {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #00d4ff;
+        }
+        .params-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .params-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .legend-tx { background: #4ade80; }
+        .legend-channel { background: #fbbf24; }
+        .legend-rx { background: #f87171; }
+        .legend-space { background: #a78bfa; }
+
+        /* Link budget */
+        .link-budget {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(0, 212, 255, 0.1));
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .link-budget-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #a78bfa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .budget-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+        }
+        .budget-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        .budget-label { color: #94a3b8; }
+        .budget-value { color: #fff; font-family: 'Courier New', monospace; }
+        .budget-positive { color: #4ade80; }
+        .budget-negative { color: #f87171; }
+
+        /* Subsection styling */
+        .subsection {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid;
+        }
+        .subsection-tx { border-left-color: #4ade80; }
+        .subsection-space { border-left-color: #a78bfa; }
+        .subsection-rx { border-left-color: #f87171; }
+        .subsection-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #94a3b8;
+        }
+
+        /* QPSK Advantage Box */
+        .advantage-box {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .advantage-title {
+            color: #4ade80;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .advantage-list {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>QPSK MEO Space-Based Inter-Satellite Link (ISL)</h1>
+    <p class="subtitle">Quadrature Phase Shift Keying with 2.2 GHz RF Upconversion/Downconversion</p>
+    <div class="orbit-badge">
+        <span>MEO 20,200 km | 2.2 GHz S-Band | RF 640 MHz / BB 80 MHz | QPSK 2 bits/symbol | 10 MSym/s</span>
+    </div>
+
+    <div class="diagram-container">
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-tx"></div>
+                <span>TX Spacecraft</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-space"></div>
+                <span>Space-Specific Processing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-channel"></div>
+                <span>Space Channel</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-rx"></div>
+                <span>RX Spacecraft</span>
+            </div>
+        </div>
+
+        <!-- QPSK Advantage -->
+        <div class="advantage-box">
+            <div class="advantage-title">QPSK Advantages for Space Communications</div>
+            <div class="advantage-list">
+                <strong>Spectral Efficiency:</strong> 2 bits/symbol - double the throughput of BPSK at same bandwidth |
+                <strong>Same Eb/N0:</strong> Identical BER performance to BPSK per bit |
+                <strong>Constant Envelope:</strong> Ideal for nonlinear SSPA/TWTA amplifiers |
+                <strong>Heritage:</strong> DVB-S2, GPS L2C, CCSDS standards, commercial satcom
+            </div>
+        </div>
+
+        <!-- TX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title tx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                TX SPACECRAFT - MEO Satellite QPSK Transmitter Chain
+            </div>
+
+            <!-- Data Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">DATA LAYER - Source Encoding & FEC</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Data Source</div>
+                        <div class="block-detail">Telemetry/Payload</div>
+                        <div class="block-detail">Binary Stream</div>
+                        <div class="python-func">np.random.randint()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Conv. Encoder</div>
+                        <div class="block-detail">Rate 1/2, K=7</div>
+                        <div class="block-detail">g1=171o, g2=133o</div>
+                        <div class="python-func">conv_encode()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Interleaver</div>
+                        <div class="block-detail">Block 32 Rows</div>
+                        <div class="block-detail">Burst Protection</div>
+                        <div class="python-func">block_interleave()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Scrambler</div>
+                        <div class="block-detail">LFSR 32-bit</div>
+                        <div class="block-detail">XOR PN Seq</div>
+                        <div class="python-func">scramble()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">QPSK Mapper</div>
+                        <div class="block-detail">Gray Coded</div>
+                        <div class="block-detail">Vectorized</div>
+                        <div class="python-func">qpsk_modulate_fast()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Diff. Encoder</div>
+                        <div class="block-detail">Phase Ambiguity</div>
+                        <div class="block-detail">s[i]&#183;s[i-1]</div>
+                        <div class="python-func">differential_encode_qpsk()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">PHYSICAL LAYER - Baseband & RF Processing (I/Q) with 2.2 GHz Upconversion</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">I/Q Upsampling</div>
+                        <div class="block-detail">8 sps Baseband</div>
+                        <div class="block-detail">80 MHz Sample Rate</div>
+                        <div class="python-func">upsampled[::sps]</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">RRC Filter</div>
+                        <div class="block-detail">&#945; = 0.35</div>
+                        <div class="block-detail">Pulse Shaping</div>
+                        <div class="python-func">rrc_filter()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">RF Upsample</div>
+                        <div class="block-detail">8x Oversample</div>
+                        <div class="block-detail">640 MHz RF Rate</div>
+                        <div class="python-func">RF_OVERSAMPLE</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Interp Filter</div>
+                        <div class="block-detail">Anti-Imaging</div>
+                        <div class="block-detail">Sinc + Hamming</div>
+                        <div class="python-func">interp_filter</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">RF Upconvert</div>
+                        <div class="block-detail">I&#183;cos - Q&#183;sin</div>
+                        <div class="block-detail">160 MHz Sim IF</div>
+                        <div class="python-func">upconvert_to_rf()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">SSPA</div>
+                        <div class="block-detail">10W Output</div>
+                        <div class="block-detail">Space Qualified</div>
+                        <div class="python-func">TX_POWER_W=10</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">1.0m Dish</div>
+                        <div class="block-detail">G = 32 dBi</div>
+                        <div class="python-func">TX_ANT_GAIN</div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-label">Baseband (80 MHz) &#8594; RF Upconversion (640 MHz) &#8594; 2.2 GHz S-Band ISL Transmission</div>
+        </div>
+
+        <!-- Space Channel Section -->
+        <div class="section">
+            <div class="section-title channel-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                MEO SPACE CHANNEL - Inter-Satellite Link Propagation
+            </div>
+
+            <!-- Space Visualization -->
+            <div class="space-vis">
+                <div class="orbit-path"></div>
+                <div class="earth-icon"></div>
+                <div class="blocks-row" style="justify-content: center; position: relative; z-index: 2;">
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                    <div class="arrow" style="font-size: 16px;">&#8594;</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Free Space Loss</div>
+                        <div class="block-detail">FSPL @ 2.2 GHz</div>
+                        <div class="block-detail">180-200 dB</div>
+                        <div class="python-func">free_space_path_loss_db()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">&#8594;</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">RF Doppler Shift</div>
+                        <div class="block-detail">&#177;57 kHz max</div>
+                        <div class="block-detail">Hilbert Transform</div>
+                        <div class="python-func">apply_doppler_shift_rf()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">&#8594;</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">RF Phase Noise</div>
+                        <div class="block-detail">-85 dBc/Hz</div>
+                        <div class="block-detail">Oscillator Model</div>
+                        <div class="python-func">phase_noise_rf()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">&#8594;</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">RF AWGN</div>
+                        <div class="block-detail">Real-valued Noise</div>
+                        <div class="block-detail">T_sys = 300K</div>
+                        <div class="python-func">np.random.randn()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">&#8594;</div>
+
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                </div>
+                <div style="text-align: center; margin-top: 10px; font-size: 10px; color: #fbbf24;">
+                    RF Channel Model: meo_space_channel_rf() | Signal at 640 MHz Sample Rate (160 MHz Simulation IF)
+                </div>
+            </div>
+            <div class="signal-label">TX Satellite (MEO) &#8594; RX Satellite (MEO) | RF Signal at 2.2 GHz Carrier | Max Doppler &#177;57 kHz @ 7.8 km/s</div>
+        </div>
+
+        <!-- RX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title rx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                RX SPACECRAFT - MEO Satellite QPSK Receiver Chain
+            </div>
+
+            <!-- RF Front End -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">RF FRONT END - 2.2 GHz Downconversion to Baseband</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">1.0m Dish</div>
+                        <div class="block-detail">G = 32 dBi</div>
+                        <div class="python-func">RX_ANT_GAIN</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">LNA</div>
+                        <div class="block-detail">GaAs HEMT</div>
+                        <div class="block-detail">NF = 1.0 dB</div>
+                        <div class="python-func">NOISE_TEMP_K</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">RF Downconvert</div>
+                        <div class="block-detail">I=2&#183;rf&#183;cos Q=-2&#183;rf&#183;sin</div>
+                        <div class="block-detail">160 MHz Sim IF</div>
+                        <div class="python-func">downconvert_from_rf()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">LPF (I & Q)</div>
+                        <div class="block-detail">6th Order Butter</div>
+                        <div class="block-detail">32 MHz Cutoff</div>
+                        <div class="python-func">butter() filtfilt()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Decimate</div>
+                        <div class="block-detail">8x Downsample</div>
+                        <div class="block-detail">640&#8594;80 MHz</div>
+                        <div class="python-func">[::RF_OVERSAMPLE]</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">BB LPF</div>
+                        <div class="block-detail">5th Order Butter</div>
+                        <div class="block-detail">Symbol Rate BW</div>
+                        <div class="python-func">butter() filtfilt()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Synchronization -->
+            <div class="subsection subsection-space">
+                <div class="subsection-title">SYNCHRONIZATION - Doppler Compensation, Carrier & Timing Recovery (QPSK)</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">Doppler Comp</div>
+                        <div class="block-detail">Freq Correction</div>
+                        <div class="block-detail">Baseband</div>
+                        <div class="python-func">apply_doppler_shift_baseband()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Matched Filter</div>
+                        <div class="block-detail">RRC &#945; = 0.35</div>
+                        <div class="block-detail">Before Carrier Rec</div>
+                        <div class="python-func">np.convolve(rrc)</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Downsample</div>
+                        <div class="block-detail">1 sps</div>
+                        <div class="block-detail">Symbol Rate</div>
+                        <div class="python-func">[::SAMPLES_PER_SYMBOL]</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Costas Loop</div>
+                        <div class="block-detail">QPSK Phase Det</div>
+                        <div class="block-detail">sign(I)Q-sign(Q)I</div>
+                        <div class="python-func">costas_loop_qpsk()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">AGC Normalize</div>
+                        <div class="block-detail">Unit Power</div>
+                        <div class="block-detail">sqrt(0.5)</div>
+                        <div class="python-func">rx_symbols/sqrt(mean)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detection & Decoding -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">DETECTION & DECODING - Symbol Decision & FEC</div>
+                <div class="blocks-row">
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Diff. Decoder</div>
+                        <div class="block-detail">90&#176; Ambiguity</div>
+                        <div class="block-detail">s[i+1]&#183;conj(s[i])</div>
+                        <div class="python-func">differential_decode_qpsk()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">QPSK Demod</div>
+                        <div class="block-detail">Hard Decision</div>
+                        <div class="block-detail">I/Q Sign&#8594;Bits</div>
+                        <div class="python-func">qpsk_demodulate()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Descrambler</div>
+                        <div class="block-detail">LFSR XOR</div>
+                        <div class="block-detail">Seed Sync</div>
+                        <div class="python-func">descramble()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">De-Interleaver</div>
+                        <div class="block-detail">Block 32 Rows</div>
+                        <div class="block-detail">Error Spread</div>
+                        <div class="python-func">block_deinterleave()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Viterbi Decoder</div>
+                        <div class="block-detail">K=7, R=1/2</div>
+                        <div class="block-detail">Hard Decision</div>
+                        <div class="python-func">viterbi_decode()</div>
+                    </div>
+                    <div class="arrow">&#8594;</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Data Sink</div>
+                        <div class="block-detail">Recovered Bits</div>
+                        <div class="block-detail">BER Analysis</div>
+                        <div class="python-func">decoded_bits</div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-label">RF Downconversion (640 MHz) &#8594; Baseband Processing (80 MHz) &#8594; Recovered Data</div>
+        </div>
+
+        <!-- MEO Parameters and Link Budget -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">MEO Orbital Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>Altitude</td>
+                        <td>8,000 - 20,200 km</td>
+                        <td>GPS @ 20,200 km</td>
+                    </tr>
+                    <tr>
+                        <td>Orbital Period</td>
+                        <td>5 - 12 hours</td>
+                        <td>Semi-sync orbits</td>
+                    </tr>
+                    <tr>
+                        <td>Orbital Velocity</td>
+                        <td>3.9 - 4.9 km/s</td>
+                        <td>Altitude dependent</td>
+                    </tr>
+                    <tr>
+                        <td>ISL Range</td>
+                        <td>1,000 - 45,000 km</td>
+                        <td>Same plane max</td>
+                    </tr>
+                    <tr>
+                        <td>Max Doppler</td>
+                        <td>&#177;57 kHz @ 2.2 GHz</td>
+                        <td>7.8 km/s relative vel</td>
+                    </tr>
+                    <tr>
+                        <td>Propagation Delay</td>
+                        <td>3.3 - 150 ms</td>
+                        <td>One-way</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">QPSK Constellation Diagram (Gray Coded)</div>
+                <div class="qpsk-constellation">
+                    <div class="qpsk-diagram">
+                        <div class="qpsk-axis qpsk-axis-h"></div>
+                        <div class="qpsk-axis qpsk-axis-v"></div>
+                        <div class="qpsk-point qpsk-point-00"></div>
+                        <div class="qpsk-point qpsk-point-01"></div>
+                        <div class="qpsk-point qpsk-point-10"></div>
+                        <div class="qpsk-point qpsk-point-11"></div>
+                        <div class="qpsk-label qpsk-label-00">00</div>
+                        <div class="qpsk-label qpsk-label-01">01</div>
+                        <div class="qpsk-label qpsk-label-10">10</div>
+                        <div class="qpsk-label qpsk-label-11">11</div>
+                        <div class="qpsk-phase-label qpsk-phase-00">135&#176;</div>
+                        <div class="qpsk-phase-label qpsk-phase-01">45&#176;</div>
+                        <div class="qpsk-phase-label qpsk-phase-10">225&#176;</div>
+                        <div class="qpsk-phase-label qpsk-phase-11">315&#176;</div>
+                        <div class="axis-label axis-label-i">I (In-phase)</div>
+                        <div class="axis-label axis-label-q">Q (Quadrature)</div>
+                    </div>
+                </div>
+                <table class="params-table" style="margin-top: 15px;">
+                    <tr>
+                        <th>RF Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Carrier Frequency</td>
+                        <td>2.2 GHz (S-Band)</td>
+                    </tr>
+                    <tr>
+                        <td>Simulation IF</td>
+                        <td>160 MHz</td>
+                    </tr>
+                    <tr>
+                        <td>RF Sample Rate</td>
+                        <td>640 MHz (8x oversample)</td>
+                    </tr>
+                    <tr>
+                        <td>Baseband Sample Rate</td>
+                        <td>80 MHz (8 sps)</td>
+                    </tr>
+                    <tr>
+                        <td>Symbol Rate</td>
+                        <td>10 MSym/s</td>
+                    </tr>
+                    <tr>
+                        <td>Bit Rate (uncoded)</td>
+                        <td>20 Mbps (2 bits/sym)</td>
+                    </tr>
+                    <tr>
+                        <td>Roll-off Factor</td>
+                        <td>&#945; = 0.35</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">System Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>TX</th>
+                        <th>RX</th>
+                    </tr>
+                    <tr>
+                        <td>Antenna Gain</td>
+                        <td>32 dBi</td>
+                        <td>32 dBi</td>
+                    </tr>
+                    <tr>
+                        <td>Antenna Diameter</td>
+                        <td>1.0 m</td>
+                        <td>1.0 m</td>
+                    </tr>
+                    <tr>
+                        <td>TX Power (SSPA)</td>
+                        <td>10 W (10 dBW)</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>System Noise Temp</td>
+                        <td>-</td>
+                        <td>300 K</td>
+                    </tr>
+                    <tr>
+                        <td>LNA Noise Figure</td>
+                        <td>-</td>
+                        <td>1.0 dB</td>
+                    </tr>
+                    <tr>
+                        <td>FEC Code</td>
+                        <td colspan="2">Conv. R=1/2, K=7</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Link Budget -->
+        <div class="link-budget">
+            <div class="link-budget-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                    <path d="M12 20V10M18 20V4M6 20v-4"/>
+                </svg>
+                MEO ISL Link Budget Analysis - QPSK (Worst Case: 20,000 km Range)
+            </div>
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">TX Power (SSPA)</span>
+                        <span class="budget-value budget-positive">+10.0 dBW</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+32.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">EIRP</span>
+                        <span class="budget-value budget-positive">+41.0 dBW</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Free Space Path Loss</span>
+                        <span class="budget-value budget-negative">-193.3 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Pointing Loss</span>
+                        <span class="budget-value budget-negative">-0.5 dB</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">RX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+32.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">RX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">System Noise Temp (300K)</span>
+                        <span class="budget-value">24.8 dBK</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">G/T</span>
+                        <span class="budget-value budget-positive">+7.2 dB/K</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">C/N0</span>
+                        <span class="budget-value budget-positive">+83.0 dBHz</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Eb/N0 (@ 20 Mbps uncoded)</span>
+                        <span class="budget-value budget-positive">+10.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Required Eb/N0 (QPSK + Conv)</span>
+                        <span class="budget-value">+5.0 dB</span>
+                    </div>
+                    <div class="budget-row" style="background: rgba(74, 222, 128, 0.1); margin-top: 5px; padding: 8px; border-radius: 5px;">
+                        <span class="budget-label"><strong>Link Margin</strong></span>
+                        <span class="budget-value budget-positive"><strong>+5.0 dB</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modulation Comparison -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">QPSK vs Other Modulations</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Modulation</th>
+                        <th>Bits/Symbol</th>
+                        <th>Req. Eb/N0 (BER=10&#8315;&#8310;)</th>
+                        <th>Space Suitability</th>
+                    </tr>
+                    <tr>
+                        <td>BPSK</td>
+                        <td>1</td>
+                        <td>10.5 dB (uncoded)</td>
+                        <td>Excellent</td>
+                    </tr>
+                    <tr style="background: rgba(74, 222, 128, 0.1);">
+                        <td><strong>QPSK</strong></td>
+                        <td><strong>2</strong></td>
+                        <td><strong>10.5 dB (uncoded)</strong></td>
+                        <td><strong>Excellent</strong></td>
+                    </tr>
+                    <tr>
+                        <td>8-PSK</td>
+                        <td>3</td>
+                        <td>14.0 dB (uncoded)</td>
+                        <td>Good</td>
+                    </tr>
+                    <tr>
+                        <td>16-QAM</td>
+                        <td>4</td>
+                        <td>14.5 dB (uncoded)</td>
+                        <td>Moderate</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">QPSK Mathematical Definition</div>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px;">
+                    <div style="margin-bottom: 10px;"><strong>Transmitted Signal:</strong></div>
+                    <div style="color: #60a5fa;">s(t) = I(t)&#183;cos(2&#960;f_c&#183;t) - Q(t)&#183;sin(2&#960;f_c&#183;t)</div>
+                    <div style="margin: 15px 0 10px;"><strong>Complex Baseband:</strong></div>
+                    <div style="color: #60a5fa;">s_bb(t) = I(t) + j&#183;Q(t)</div>
+                    <div style="margin: 15px 0 10px;"><strong>Symbol Mapping (Gray Code):</strong></div>
+                    <div style="color: #ef4444;">00 &#8594; (-1-j)/&#8730;2 &#8594; 135&#176;</div>
+                    <div style="color: #4ade80;">01 &#8594; (+1-j)/&#8730;2 &#8594; 45&#176;</div>
+                    <div style="color: #fbbf24;">10 &#8594; (-1+j)/&#8730;2 &#8594; 225&#176;</div>
+                    <div style="color: #60a5fa;">11 &#8594; (+1+j)/&#8730;2 &#8594; 315&#176;</div>
+                    <div style="margin: 15px 0 10px;"><strong>BER (AWGN):</strong></div>
+                    <div style="color: #fbbf24;">P_e = Q(&#8730;(2&#183;Eb/N0)) [same as BPSK]</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Python Implementation -->
+        <div class="section code-section">
+            <div class="section-title" style="color: #00d4ff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+                </svg>
+                Python Implementation - MEO Space-Based QPSK ISL System
+            </div>
+            <div class="code-block">
+                <pre><span class="code-comment">"""
+QPSK MEO Inter-Satellite Link (ISL) System Implementation
+Space-based signal processing chain for Medium Earth Orbit communications
+Quadrature Phase Shift Keying with Convolutional FEC and Viterbi decoding
+2 bits/symbol - Double spectral efficiency vs BPSK
+"""</span>
+
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">from</span> scipy <span class="code-keyword">import</span> signal
+<span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> butter, filtfilt
+<span class="code-keyword">from</span> scipy.constants <span class="code-keyword">import</span> c, k  <span class="code-comment"># speed of light, Boltzmann</span>
+
+<span class="code-comment"># ============== MEO ORBITAL CONSTANTS ==============</span>
+<span class="code-class">EARTH_RADIUS</span> = <span class="code-number">6371e3</span>           <span class="code-comment"># meters</span>
+<span class="code-class">EARTH_MU</span> = <span class="code-number">3.986e14</span>             <span class="code-comment"># gravitational parameter m^3/s^2</span>
+<span class="code-class">MEO_ALTITUDE</span> = <span class="code-number">20200e3</span>          <span class="code-comment"># 20,200 km (GPS orbit)</span>
+
+<span class="code-comment"># ============== RF SYSTEM PARAMETERS ==============</span>
+<span class="code-class">CARRIER_FREQ</span> = <span class="code-number">2.2e9</span>            <span class="code-comment"># 2.2 GHz S-band (actual RF carrier)</span>
+<span class="code-class">WAVELENGTH</span> = c / <span class="code-class">CARRIER_FREQ</span>
+<span class="code-class">SYMBOL_RATE</span> = <span class="code-number">10e6</span>              <span class="code-comment"># 10 MSym/s = 20 Mbps (QPSK: 2 bits/symbol)</span>
+<span class="code-class">BIT_RATE</span> = <span class="code-class">SYMBOL_RATE</span> * <span class="code-number">2</span>      <span class="code-comment"># 20 Mbps uncoded</span>
+<span class="code-class">SAMPLES_PER_SYMBOL</span> = <span class="code-number">8</span>
+<span class="code-class">BASEBAND_SAMPLE_RATE</span> = <span class="code-class">SYMBOL_RATE</span> * <span class="code-class">SAMPLES_PER_SYMBOL</span>  <span class="code-comment"># 80 MHz baseband</span>
+
+<span class="code-comment"># RF simulation parameters - use higher sample rate to represent carrier</span>
+<span class="code-class">RF_OVERSAMPLE_FACTOR</span> = <span class="code-number">8</span>        <span class="code-comment"># Oversample factor for RF simulation</span>
+<span class="code-class">RF_SAMPLE_RATE</span> = <span class="code-class">BASEBAND_SAMPLE_RATE</span> * <span class="code-class">RF_OVERSAMPLE_FACTOR</span>  <span class="code-comment"># 640 MHz for RF</span>
+<span class="code-class">SIMULATION_IF</span> = <span class="code-number">160e6</span>           <span class="code-comment"># Intermediate frequency for RF simulation</span>
+
+<span class="code-class">ROLLOFF</span> = <span class="code-number">0.35</span>                  <span class="code-comment"># RRC roll-off factor</span>
+<span class="code-class">FILTER_SPAN</span> = <span class="code-number">10</span>                 <span class="code-comment"># symbols</span>
+
+<span class="code-comment"># Link budget parameters</span>
+<span class="code-class">TX_POWER_W</span> = <span class="code-number">10</span>                  <span class="code-comment"># 10W SSPA</span>
+<span class="code-class">TX_ANTENNA_GAIN_DBI</span> = <span class="code-number">32</span>        <span class="code-comment"># 1.0m dish @ 2.2 GHz</span>
+<span class="code-class">RX_ANTENNA_GAIN_DBI</span> = <span class="code-number">32</span>
+<span class="code-class">SYSTEM_NOISE_TEMP_K</span> = <span class="code-number">300</span>       <span class="code-comment"># Kelvin</span>
+<span class="code-class">LINE_LOSS_DB</span> = <span class="code-number">1.0</span>
+
+<span class="code-comment"># QPSK Constellation Points (Gray Coded)</span>
+<span class="code-comment"># 00 -&gt; 135deg, 01 -&gt; 45deg, 10 -&gt; 225deg, 11 -&gt; 315deg</span>
+<span class="code-class">QPSK_CONSTELLATION</span> = {
+    (<span class="code-number">0</span>, <span class="code-number">0</span>): (-<span class="code-number">1</span> - <span class="code-number">1j</span>) / np.sqrt(<span class="code-number">2</span>),  <span class="code-comment"># 135 deg</span>
+    (<span class="code-number">0</span>, <span class="code-number">1</span>): (+<span class="code-number">1</span> - <span class="code-number">1j</span>) / np.sqrt(<span class="code-number">2</span>),  <span class="code-comment"># 45 deg</span>
+    (<span class="code-number">1</span>, <span class="code-number">0</span>): (-<span class="code-number">1</span> + <span class="code-number">1j</span>) / np.sqrt(<span class="code-number">2</span>),  <span class="code-comment"># 225 deg</span>
+    (<span class="code-number">1</span>, <span class="code-number">1</span>): (+<span class="code-number">1</span> + <span class="code-number">1j</span>) / np.sqrt(<span class="code-number">2</span>),  <span class="code-comment"># 315 deg</span>
+}
+
+<span class="code-comment"># ============== QPSK MODULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">bits_to_symbols</span>(bits):
+    <span class="code-string">"""Convert bit stream to dibit pairs"""</span>
+    <span class="code-comment"># Ensure even number of bits</span>
+    <span class="code-keyword">if</span> len(bits) % <span class="code-number">2</span> != <span class="code-number">0</span>:
+        bits = np.append(bits, <span class="code-number">0</span>)
+    <span class="code-keyword">return</span> bits.reshape(-<span class="code-number">1</span>, <span class="code-number">2</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">qpsk_modulate</span>(bits):
+    <span class="code-string">"""
+    QPSK modulation with Gray coding
+    Maps dibits to complex symbols
+    00 -&gt; (-1-j)/sqrt2, 01 -&gt; (+1-j)/sqrt2
+    10 -&gt; (-1+j)/sqrt2, 11 -&gt; (+1+j)/sqrt2
+    """</span>
+    dibits = bits_to_symbols(bits)
+    symbols = np.zeros(len(dibits), dtype=complex)
+
+    <span class="code-keyword">for</span> i, (b0, b1) <span class="code-keyword">in</span> enumerate(dibits):
+        symbols[i] = <span class="code-class">QPSK_CONSTELLATION</span>[(b0, b1)]
+
+    <span class="code-keyword">return</span> symbols
+
+<span class="code-keyword">def</span> <span class="code-function">qpsk_modulate_fast</span>(bits):
+    <span class="code-string">"""Vectorized QPSK modulation for performance"""</span>
+    <span class="code-keyword">if</span> len(bits) % <span class="code-number">2</span> != <span class="code-number">0</span>:
+        bits = np.append(bits, <span class="code-number">0</span>)
+
+    <span class="code-comment"># Map bits to I and Q components</span>
+    I_bits = bits[<span class="code-number">0</span>::<span class="code-number">2</span>]  <span class="code-comment"># Even bits -&gt; Q</span>
+    Q_bits = bits[<span class="code-number">1</span>::<span class="code-number">2</span>]  <span class="code-comment"># Odd bits -&gt; I</span>
+
+    <span class="code-comment"># Convert to bipolar: 0 -&gt; -1, 1 -&gt; +1</span>
+    I = (<span class="code-number">2</span> * Q_bits - <span class="code-number">1</span>) / np.sqrt(<span class="code-number">2</span>)
+    Q = -(<span class="code-number">2</span> * I_bits - <span class="code-number">1</span>) / np.sqrt(<span class="code-number">2</span>)
+
+    <span class="code-keyword">return</span> I + <span class="code-number">1j</span> * Q
+
+<span class="code-keyword">def</span> <span class="code-function">qpsk_demodulate</span>(symbols):
+    <span class="code-string">"""
+    QPSK demodulation: hard decision on I/Q
+    Returns bit stream from complex symbols
+    """</span>
+    <span class="code-comment"># Decision based on sign of I and Q</span>
+    I = np.real(symbols)
+    Q = np.imag(symbols)
+
+    <span class="code-comment"># Map back to bits (Gray coded)</span>
+    Q_bits = (Q &lt; <span class="code-number">0</span>).astype(int)   <span class="code-comment"># First bit of dibit</span>
+    I_bits = (I &gt; <span class="code-number">0</span>).astype(int)   <span class="code-comment"># Second bit of dibit</span>
+
+    <span class="code-comment"># Interleave to form bit stream</span>
+    bits = np.zeros(<span class="code-number">2</span> * len(symbols), dtype=int)
+    bits[<span class="code-number">0</span>::<span class="code-number">2</span>] = Q_bits
+    bits[<span class="code-number">1</span>::<span class="code-number">2</span>] = I_bits
+
+    <span class="code-keyword">return</span> bits
+
+<span class="code-comment"># ============== DIFFERENTIAL ENCODING (QPSK) ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">differential_encode_qpsk</span>(symbols):
+    <span class="code-string">"""
+    Differential encoding for QPSK to resolve 90 degree phase ambiguity
+    Encodes the phase difference between consecutive symbols
+    """</span>
+    encoded = np.zeros(len(symbols) + <span class="code-number">1</span>, dtype=complex)
+    encoded[<span class="code-number">0</span>] = <span class="code-number">1</span> + <span class="code-number">0j</span>  <span class="code-comment"># Reference symbol</span>
+
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(symbols)):
+        encoded[i+<span class="code-number">1</span>] = encoded[i] * symbols[i]
+        <span class="code-comment"># Normalize to unit circle</span>
+        encoded[i+<span class="code-number">1</span>] /= np.abs(encoded[i+<span class="code-number">1</span>])
+
+    <span class="code-keyword">return</span> encoded[<span class="code-number">1</span>:]
+
+<span class="code-keyword">def</span> <span class="code-function">differential_decode_qpsk</span>(symbols):
+    <span class="code-string">"""Differential decoding for QPSK"""</span>
+    decoded = np.zeros(len(symbols) - <span class="code-number">1</span>, dtype=complex)
+
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(symbols) - <span class="code-number">1</span>):
+        decoded[i] = symbols[i+<span class="code-number">1</span>] * np.conj(symbols[i])
+        <span class="code-comment"># Normalize</span>
+        decoded[i] /= np.abs(decoded[i]) <span class="code-keyword">if</span> np.abs(decoded[i]) &gt; <span class="code-number">0</span> <span class="code-keyword">else</span> <span class="code-number">1</span>
+
+    <span class="code-keyword">return</span> decoded
+
+<span class="code-comment"># ============== CONVOLUTIONAL ENCODER (Rate 1/2, K=7) ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">conv_encode</span>(bits, g1=<span class="code-number">0o171</span>, g2=<span class="code-number">0o133</span>):
+    <span class="code-string">"""
+    Convolutional encoder - NASA standard rate 1/2, K=7
+    g1 = 171 octal (1111001)
+    g2 = 133 octal (1011011)
+    """</span>
+    K = <span class="code-number">7</span>  <span class="code-comment"># Constraint length</span>
+    state = <span class="code-number">0</span>
+    encoded = []
+
+    <span class="code-keyword">for</span> bit <span class="code-keyword">in</span> bits:
+        state = ((state &lt;&lt; <span class="code-number">1</span>) | int(bit)) &amp; (<span class="code-number">2</span>**K - <span class="code-number">1</span>)
+
+        <span class="code-comment"># Output 1: XOR of bits selected by g1</span>
+        out1 = bin(state &amp; g1).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+        <span class="code-comment"># Output 2: XOR of bits selected by g2</span>
+        out2 = bin(state &amp; g2).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+
+        encoded.extend([out1, out2])
+
+    <span class="code-comment"># Flush encoder with zeros</span>
+    <span class="code-keyword">for</span> _ <span class="code-keyword">in</span> range(K - <span class="code-number">1</span>):
+        state = (state &lt;&lt; <span class="code-number">1</span>) &amp; (<span class="code-number">2</span>**K - <span class="code-number">1</span>)
+        out1 = bin(state &amp; g1).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+        out2 = bin(state &amp; g2).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+        encoded.extend([out1, out2])
+
+    <span class="code-keyword">return</span> np.array(encoded)
+
+<span class="code-keyword">def</span> <span class="code-function">viterbi_decode</span>(received, num_info_bits, g1=<span class="code-number">0o171</span>, g2=<span class="code-number">0o133</span>):
+    <span class="code-string">"""
+    Viterbi decoder for rate 1/2, K=7 convolutional code
+    Hard decision decoding
+    """</span>
+    K = <span class="code-number">7</span>
+    num_states = <span class="code-number">2</span> ** (K - <span class="code-number">1</span>)
+
+    <span class="code-comment"># Initialize path metrics</span>
+    path_metric = np.full(num_states, np.inf)
+    path_metric[<span class="code-number">0</span>] = <span class="code-number">0</span>
+
+    <span class="code-comment"># Survivor paths</span>
+    survivors = np.zeros((len(received)//<span class="code-number">2</span>, num_states), dtype=int)
+
+    <span class="code-comment"># Process received bits in pairs</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(<span class="code-number">0</span>, len(received), <span class="code-number">2</span>):
+        rx_bits = received[i:i+<span class="code-number">2</span>]
+        new_path_metric = np.full(num_states, np.inf)
+
+        <span class="code-keyword">for</span> state <span class="code-keyword">in</span> range(num_states):
+            <span class="code-keyword">for</span> input_bit <span class="code-keyword">in</span> [<span class="code-number">0</span>, <span class="code-number">1</span>]:
+                <span class="code-comment"># Calculate next state</span>
+                next_state = ((state &lt;&lt; <span class="code-number">1</span>) | input_bit) &amp; (num_states - <span class="code-number">1</span>)
+
+                <span class="code-comment"># Calculate expected output</span>
+                full_state = (state &lt;&lt; <span class="code-number">1</span>) | input_bit
+                exp_out1 = bin(full_state &amp; g1).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+                exp_out2 = bin(full_state &amp; g2).count(<span class="code-string">'1'</span>) % <span class="code-number">2</span>
+
+                <span class="code-comment"># Hamming distance</span>
+                branch_metric = (rx_bits[<span class="code-number">0</span>] != exp_out1) + (rx_bits[<span class="code-number">1</span>] != exp_out2)
+
+                <span class="code-comment"># Update path metric</span>
+                candidate_metric = path_metric[state] + branch_metric
+                <span class="code-keyword">if</span> candidate_metric &lt; new_path_metric[next_state]:
+                    new_path_metric[next_state] = candidate_metric
+                    survivors[i//<span class="code-number">2</span>, next_state] = state
+
+        path_metric = new_path_metric
+
+    <span class="code-comment"># Traceback</span>
+    state = <span class="code-number">0</span>  <span class="code-comment"># Assume terminated to zero state</span>
+    decoded = []
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(received)//<span class="code-number">2</span> - <span class="code-number">1</span>, -<span class="code-number">1</span>, -<span class="code-number">1</span>):
+        prev_state = survivors[i, state]
+        decoded_bit = (state &gt;&gt; (K - <span class="code-number">2</span>)) &amp; <span class="code-number">1</span>
+        decoded.append(decoded_bit)
+        state = prev_state
+
+    decoded = np.array(decoded[::-<span class="code-number">1</span>])
+    <span class="code-keyword">return</span> decoded[:num_info_bits]
+
+<span class="code-comment"># ============== INTERLEAVER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">block_interleave</span>(bits, rows=<span class="code-number">32</span>):
+    <span class="code-string">"""Block interleaver for burst error protection"""</span>
+    cols = int(np.ceil(len(bits) / rows))
+    padded = np.zeros(rows * cols, dtype=int)
+    padded[:len(bits)] = bits
+    matrix = padded.reshape(rows, cols)
+    <span class="code-keyword">return</span> matrix.T.flatten()
+
+<span class="code-keyword">def</span> <span class="code-function">block_deinterleave</span>(bits, rows=<span class="code-number">32</span>):
+    <span class="code-string">"""Block de-interleaver"""</span>
+    cols = int(np.ceil(len(bits) / rows))
+    matrix = bits[:rows*cols].reshape(cols, rows)
+    <span class="code-keyword">return</span> matrix.T.flatten()
+
+<span class="code-comment"># ============== SCRAMBLER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">lfsr_sequence</span>(length, seed=<span class="code-number">0x1ACFFC1D</span>):
+    <span class="code-string">"""Generate LFSR pseudo-random sequence"""</span>
+    state = seed
+    seq = np.zeros(length, dtype=int)
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(length):
+        seq[i] = state &amp; <span class="code-number">1</span>
+        newbit = ((state &gt;&gt; <span class="code-number">0</span>) ^ (state &gt;&gt; <span class="code-number">2</span>) ^ (state &gt;&gt; <span class="code-number">3</span>) ^ (state &gt;&gt; <span class="code-number">5</span>)) &amp; <span class="code-number">1</span>
+        state = (state &gt;&gt; <span class="code-number">1</span>) | (newbit &lt;&lt; <span class="code-number">31</span>)
+    <span class="code-keyword">return</span> seq
+
+<span class="code-keyword">def</span> <span class="code-function">scramble</span>(bits):
+    <span class="code-string">"""Scramble bits with LFSR sequence"""</span>
+    pn = lfsr_sequence(len(bits))
+    <span class="code-keyword">return</span> (bits ^ pn).astype(int)
+
+<span class="code-keyword">def</span> <span class="code-function">descramble</span>(bits):
+    <span class="code-string">"""Descramble bits"""</span>
+    <span class="code-keyword">return</span> scramble(bits)
+
+<span class="code-comment"># ============== PULSE SHAPING ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">rrc_filter</span>(num_taps, alpha, sps):
+    <span class="code-string">"""Root Raised Cosine filter design"""</span>
+    t = np.arange(-num_taps//<span class="code-number">2</span>, num_taps//<span class="code-number">2</span> + <span class="code-number">1</span>) / sps
+    h = np.zeros_like(t, dtype=float)
+
+    <span class="code-keyword">for</span> i, ti <span class="code-keyword">in</span> enumerate(t):
+        <span class="code-keyword">if</span> ti == <span class="code-number">0</span>:
+            h[i] = <span class="code-number">1</span> + alpha * (<span class="code-number">4</span>/np.pi - <span class="code-number">1</span>)
+        <span class="code-keyword">elif</span> abs(abs(ti) - <span class="code-number">1</span>/(<span class="code-number">4</span>*alpha)) &lt; <span class="code-number">1e-10</span>:
+            h[i] = alpha/np.sqrt(<span class="code-number">2</span>) * ((<span class="code-number">1</span>+<span class="code-number">2</span>/np.pi)*np.sin(np.pi/(<span class="code-number">4</span>*alpha)) +
+                                         (<span class="code-number">1</span>-<span class="code-number">2</span>/np.pi)*np.cos(np.pi/(<span class="code-number">4</span>*alpha)))
+        <span class="code-keyword">else</span>:
+            num = np.sin(np.pi*ti*(<span class="code-number">1</span>-alpha)) + <span class="code-number">4</span>*alpha*ti*np.cos(np.pi*ti*(<span class="code-number">1</span>+alpha))
+            den = np.pi*ti*(<span class="code-number">1</span> - (<span class="code-number">4</span>*alpha*ti)**<span class="code-number">2</span>)
+            h[i] = num / (den + <span class="code-number">1e-10</span>)
+
+    <span class="code-keyword">return</span> h / np.sqrt(np.sum(h**<span class="code-number">2</span>))
+
+<span class="code-comment"># ============== SPACE CHANNEL MODEL ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">free_space_path_loss_db</span>(distance, freq=<span class="code-class">CARRIER_FREQ</span>):
+    <span class="code-string">"""Calculate FSPL in dB"""</span>
+    fspl = (<span class="code-number">4</span> * np.pi * distance * freq / c) ** <span class="code-number">2</span>
+    <span class="code-keyword">return</span> <span class="code-number">10</span> * np.log10(fspl)
+
+<span class="code-keyword">def</span> <span class="code-function">apply_doppler_shift</span>(signal_in, doppler_hz, sample_rate):
+    <span class="code-string">"""Apply Doppler frequency shift"""</span>
+    t = np.arange(len(signal_in)) / sample_rate
+    shift = np.exp(<span class="code-number">2j</span> * np.pi * doppler_hz * t)
+    <span class="code-keyword">return</span> signal_in * shift
+
+<span class="code-keyword">def</span> <span class="code-function">phase_noise</span>(signal_len, phase_noise_std_rad=<span class="code-number">0.01</span>):
+    <span class="code-string">"""Generate phase noise (random walk model)"""</span>
+    phase_increments = phase_noise_std_rad * np.random.randn(signal_len)
+    phase = np.cumsum(phase_increments)
+    <span class="code-keyword">return</span> np.exp(<span class="code-number">1j</span> * phase)
+
+<span class="code-keyword">def</span> <span class="code-function">iq_imbalance</span>(signal_in, gain_imbalance_db=<span class="code-number">0.1</span>, phase_imbalance_deg=<span class="code-number">1.0</span>):
+    <span class="code-string">"""Apply I/Q imbalance (relevant for QPSK)"""</span>
+    g = <span class="code-number">10</span> ** (gain_imbalance_db / <span class="code-number">20</span>)
+    phi = np.deg2rad(phase_imbalance_deg)
+
+    I = np.real(signal_in)
+    Q = np.imag(signal_in)
+
+    I_out = I
+    Q_out = g * (np.sin(phi) * I + np.cos(phi) * Q)
+
+    <span class="code-keyword">return</span> I_out + <span class="code-number">1j</span> * Q_out
+
+<span class="code-keyword">def</span> <span class="code-function">apply_doppler_shift_rf</span>(rf_signal, doppler_hz, sample_rate):
+    <span class="code-string">"""Apply Doppler frequency shift to RF signal using Hilbert transform"""</span>
+    <span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> hilbert
+    t = np.arange(len(rf_signal)) / sample_rate
+    analytic_signal = hilbert(rf_signal)
+    phase_shift = np.exp(<span class="code-number">1j</span> * <span class="code-number">2</span> * np.pi * doppler_hz * t)
+    <span class="code-keyword">return</span> np.real(analytic_signal * phase_shift)
+
+<span class="code-keyword">def</span> <span class="code-function">phase_noise_rf</span>(signal_len, sample_rate, phase_noise_dbc_hz=-<span class="code-number">85</span>):
+    <span class="code-string">"""Generate phase noise for RF oscillator"""</span>
+    effective_noise_bw = <span class="code-class">SYMBOL_RATE</span>
+    phase_var = min(<span class="code-number">10</span> ** (phase_noise_dbc_hz / <span class="code-number">10</span>) * effective_noise_bw, <span class="code-number">0.01</span>)
+    phase_std = np.sqrt(phase_var / signal_len)
+    phase = np.cumsum(phase_std * np.random.randn(signal_len))
+    <span class="code-keyword">return</span> np.exp(<span class="code-number">1j</span> * phase)
+
+<span class="code-keyword">def</span> <span class="code-function">meo_space_channel_rf</span>(rf_signal, distance_km, doppler_hz, snr_db, sample_rate=<span class="code-class">RF_SAMPLE_RATE</span>):
+    <span class="code-string">"""Complete MEO space channel model for RF signal at 2.2 GHz carrier"""</span>
+    <span class="code-comment"># Apply Doppler shift to RF signal</span>
+    rf_doppler = apply_doppler_shift_rf(rf_signal, doppler_hz, sample_rate)
+    <span class="code-comment"># Apply phase noise (oscillator instability)</span>
+    <span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> hilbert
+    analytic = hilbert(rf_doppler)
+    pn = phase_noise_rf(len(analytic), sample_rate, phase_noise_dbc_hz=-<span class="code-number">85</span>)
+    rf_with_pn = np.real(analytic * pn)
+    <span class="code-comment"># Add AWGN (real-valued for RF)</span>
+    signal_power = np.mean(rf_with_pn ** <span class="code-number">2</span>)
+    snr_linear = <span class="code-number">10</span> ** (snr_db / <span class="code-number">10</span>)
+    noise_power = signal_power / snr_linear
+    noise = np.sqrt(noise_power) * np.random.randn(len(rf_with_pn))
+    <span class="code-keyword">return</span> rf_with_pn + noise
+
+<span class="code-comment"># ============== CARRIER RECOVERY (QPSK) ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">costas_loop_qpsk</span>(signal_in, loop_bw=<span class="code-number">0.01</span>):
+    <span class="code-string">"""
+    Costas loop for QPSK carrier recovery
+    Uses decision-directed phase detector
+    """</span>
+    phase = <span class="code-number">0</span>
+    freq = <span class="code-number">0</span>
+    output = np.zeros_like(signal_in, dtype=complex)
+
+    <span class="code-comment"># Loop filter coefficients</span>
+    damping = <span class="code-number">0.707</span>
+    K1 = <span class="code-number">4</span> * damping * loop_bw
+    K2 = <span class="code-number">4</span> * loop_bw ** <span class="code-number">2</span>
+
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(signal_in)):
+        <span class="code-comment"># Mix with NCO</span>
+        output[i] = signal_in[i] * np.exp(-<span class="code-number">1j</span> * phase)
+
+        <span class="code-comment"># QPSK phase detector: sign(I)*Q - sign(Q)*I</span>
+        I = np.real(output[i])
+        Q = np.imag(output[i])
+        error = np.sign(I) * Q - np.sign(Q) * I
+
+        <span class="code-comment"># Loop filter</span>
+        freq += K2 * error
+        phase += K1 * error + freq
+
+    <span class="code-keyword">return</span> output
+
+<span class="code-keyword">def</span> <span class="code-function">fourth_power_freq_est</span>(signal_in, sample_rate):
+    <span class="code-string">"""
+    Fourth power frequency estimation for QPSK
+    Removes modulation to estimate carrier offset
+    """</span>
+    <span class="code-comment"># Raise to 4th power to remove QPSK modulation</span>
+    signal_4th = signal_in ** <span class="code-number">4</span>
+
+    <span class="code-comment"># FFT to find frequency offset</span>
+    N = len(signal_4th)
+    spectrum = np.fft.fft(signal_4th)
+    freqs = np.fft.fftfreq(N, <span class="code-number">1</span>/sample_rate)
+
+    <span class="code-comment"># Find peak (frequency offset is 1/4 of detected)</span>
+    peak_idx = np.argmax(np.abs(spectrum))
+    freq_offset = freqs[peak_idx] / <span class="code-number">4</span>
+
+    <span class="code-keyword">return</span> freq_offset
+
+<span class="code-comment"># ============== TIMING RECOVERY ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">gardner_ted</span>(signal_in, sps):
+    <span class="code-string">"""
+    Gardner Timing Error Detector for QPSK
+    Works on both I and Q channels
+    """</span>
+    <span class="code-comment"># Simplified implementation - returns timing error</span>
+    errors = []
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(sps, len(signal_in) - sps, sps):
+        <span class="code-comment"># Sample at symbol, mid-point, previous symbol</span>
+        curr = signal_in[i]
+        mid = signal_in[i - sps//<span class="code-number">2</span>]
+        prev = signal_in[i - sps]
+
+        <span class="code-comment"># Gardner error: real(mid * conj(curr - prev))</span>
+        error = np.real(mid * np.conj(curr - prev))
+        errors.append(error)
+
+    <span class="code-keyword">return</span> np.array(errors)
+
+<span class="code-comment"># ============== RF UPCONVERSION (TX) ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">upconvert_to_rf</span>(baseband_signal, carrier_freq=<span class="code-class">CARRIER_FREQ</span>):
+    <span class="code-string">"""Upconvert complex baseband signal to RF at 2.2 GHz carrier"""</span>
+    <span class="code-comment"># Upsample baseband signal to RF sample rate</span>
+    baseband_upsampled = np.zeros(len(baseband_signal) * <span class="code-class">RF_OVERSAMPLE_FACTOR</span>, dtype=complex)
+    baseband_upsampled[::<span class="code-class">RF_OVERSAMPLE_FACTOR</span>] = baseband_signal
+
+    <span class="code-comment"># Interpolation filter (anti-imaging)</span>
+    interp_filter = np.sinc(np.arange(-<span class="code-number">32</span>, <span class="code-number">32</span>) / <span class="code-class">RF_OVERSAMPLE_FACTOR</span>)
+    interp_filter *= np.hamming(len(interp_filter))
+    baseband_interp = np.convolve(baseband_upsampled, interp_filter, mode=<span class="code-string">'same'</span>)
+
+    <span class="code-comment"># Quadrature upconversion to simulation IF</span>
+    t = np.arange(len(baseband_interp)) / <span class="code-class">RF_SAMPLE_RATE</span>
+    I, Q = np.real(baseband_interp), np.imag(baseband_interp)
+    rf_signal = I * np.cos(<span class="code-number">2</span>*np.pi*<span class="code-class">SIMULATION_IF</span>*t) - Q * np.sin(<span class="code-number">2</span>*np.pi*<span class="code-class">SIMULATION_IF</span>*t)
+    <span class="code-keyword">return</span> rf_signal, <span class="code-class">RF_SAMPLE_RATE</span>
+
+<span class="code-comment"># ============== TRANSMITTER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_qpsk_transmitter</span>(data_bits, use_rf_upconversion=<span class="code-keyword">True</span>):
+    <span class="code-string">"""Complete MEO QPSK transmitter with 2.2 GHz upconversion"""</span>
+
+    <span class="code-comment"># Convolutional encoding (rate 1/2)</span>
+    encoded = conv_encode(data_bits)
+    <span class="code-comment"># Interleaving</span>
+    interleaved = block_interleave(encoded)
+    <span class="code-comment"># Scrambling</span>
+    scrambled = scramble(interleaved)
+    <span class="code-comment"># QPSK modulation (includes S/P conversion)</span>
+    symbols = qpsk_modulate_fast(scrambled)
+    <span class="code-comment"># Differential encoding for phase ambiguity resolution</span>
+    diff_encoded = differential_encode_qpsk(symbols)
+    <span class="code-comment"># Upsampling</span>
+    upsampled = np.zeros(len(diff_encoded) * <span class="code-class">SAMPLES_PER_SYMBOL</span>, dtype=complex)
+    upsampled[::<span class="code-class">SAMPLES_PER_SYMBOL</span>] = diff_encoded
+    <span class="code-comment"># Pulse shaping (RRC filter)</span>
+    num_taps = <span class="code-class">FILTER_SPAN</span> * <span class="code-class">SAMPLES_PER_SYMBOL</span> + <span class="code-number">1</span>
+    rrc = rrc_filter(num_taps, <span class="code-class">ROLLOFF</span>, <span class="code-class">SAMPLES_PER_SYMBOL</span>)
+    baseband_signal = np.convolve(upsampled, rrc, mode=<span class="code-string">'same'</span>)
+
+    <span class="code-keyword">if</span> use_rf_upconversion:
+        <span class="code-comment"># Upconvert to 2.2 GHz carrier (represented by simulation IF)</span>
+        rf_signal, rf_sample_rate = upconvert_to_rf(baseband_signal, <span class="code-class">CARRIER_FREQ</span>)
+        <span class="code-keyword">return</span> rf_signal, baseband_signal, diff_encoded, rrc, len(diff_encoded), rf_sample_rate
+    <span class="code-keyword">else</span>:
+        <span class="code-keyword">return</span> baseband_signal, baseband_signal, diff_encoded, rrc, len(diff_encoded), <span class="code-class">BASEBAND_SAMPLE_RATE</span>
+
+<span class="code-comment"># ============== RF DOWNCONVERSION (RX) ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">downconvert_from_rf</span>(rf_signal, carrier_freq=<span class="code-class">CARRIER_FREQ</span>):
+    <span class="code-string">"""Downconvert RF signal from 2.2 GHz carrier to complex baseband"""</span>
+    t = np.arange(len(rf_signal)) / <span class="code-class">RF_SAMPLE_RATE</span>
+    <span class="code-comment"># Quadrature downconversion from simulation IF</span>
+    I_mixed = rf_signal * np.cos(<span class="code-number">2</span>*np.pi*<span class="code-class">SIMULATION_IF</span>*t) * <span class="code-number">2</span>
+    Q_mixed = -rf_signal * np.sin(<span class="code-number">2</span>*np.pi*<span class="code-class">SIMULATION_IF</span>*t) * <span class="code-number">2</span>
+    <span class="code-comment"># Low-pass filter to remove double-frequency components</span>
+    nyq = <span class="code-class">RF_SAMPLE_RATE</span> / <span class="code-number">2</span>
+    cutoff = <span class="code-class">BASEBAND_SAMPLE_RATE</span> / <span class="code-number">2</span> * <span class="code-number">0.8</span>
+    b, a = butter(<span class="code-number">6</span>, cutoff / nyq, btype=<span class="code-string">'low'</span>)
+    I_filtered = filtfilt(b, a, I_mixed)
+    Q_filtered = filtfilt(b, a, Q_mixed)
+    <span class="code-comment"># Decimate back to baseband sample rate</span>
+    baseband_signal = (I_filtered + <span class="code-number">1j</span>*Q_filtered)[::<span class="code-class">RF_OVERSAMPLE_FACTOR</span>]
+    <span class="code-keyword">return</span> baseband_signal
+
+<span class="code-comment"># ============== RECEIVER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_qpsk_receiver</span>(rf_signal, rrc, num_symbols, num_info_bits, doppler_hz=<span class="code-number">0</span>,
+                       use_rf_downconversion=<span class="code-keyword">True</span>):
+    <span class="code-string">"""Complete MEO QPSK receiver with 2.2 GHz downconversion"""</span>
+
+    <span class="code-keyword">if</span> use_rf_downconversion:
+        <span class="code-comment"># Downconvert from 2.2 GHz carrier to complex baseband</span>
+        baseband = downconvert_from_rf(rf_signal, <span class="code-class">CARRIER_FREQ</span>)
+        <span class="code-comment"># Additional low-pass filtering at baseband</span>
+        nyq = <span class="code-class">BASEBAND_SAMPLE_RATE</span> / <span class="code-number">2</span>
+        b, a = butter(<span class="code-number">5</span>, <span class="code-class">SYMBOL_RATE</span> / nyq, btype=<span class="code-string">'low'</span>)
+        baseband = filtfilt(b, a, np.real(baseband)) + <span class="code-number">1j</span>*filtfilt(b, a, np.imag(baseband))
+    <span class="code-keyword">else</span>:
+        baseband = rf_signal  <span class="code-comment"># Already complex baseband</span>
+
+    <span class="code-comment"># Doppler compensation</span>
+    <span class="code-keyword">if</span> doppler_hz != <span class="code-number">0</span>:
+        t = np.arange(len(baseband)) / <span class="code-class">BASEBAND_SAMPLE_RATE</span>
+        baseband = baseband * np.exp(-<span class="code-number">2j</span>*np.pi*doppler_hz*t)
+
+    <span class="code-comment"># Matched filter FIRST (before carrier recovery)</span>
+    filtered = np.convolve(baseband, rrc, mode=<span class="code-string">'same'</span>)
+    <span class="code-comment"># Downsample to symbol rate</span>
+    rx_symbols_raw = filtered[::<span class="code-class">SAMPLES_PER_SYMBOL</span>][:num_symbols]
+    <span class="code-comment"># Carrier recovery (QPSK Costas loop)</span>
+    rx_symbols = costas_loop_qpsk(rx_symbols_raw, loop_bw=<span class="code-number">0.02</span>)
+    <span class="code-comment"># AGC normalization</span>
+    rx_symbols = rx_symbols / np.sqrt(np.mean(np.abs(rx_symbols)**<span class="code-number">2</span>)) * np.sqrt(<span class="code-number">0.5</span>)
+    <span class="code-comment"># Differential decoding</span>
+    diff_decoded = differential_decode_qpsk(rx_symbols)
+    <span class="code-comment"># QPSK demodulation</span>
+    rx_bits = qpsk_demodulate(diff_decoded)
+    <span class="code-comment"># Descramble</span>
+    descrambled = descramble(rx_bits)
+    <span class="code-comment"># De-interleave</span>
+    deinterleaved = block_deinterleave(descrambled)
+    <span class="code-comment"># Viterbi decoding</span>
+    decoded = viterbi_decode(deinterleaved, num_info_bits)
+
+    <span class="code-keyword">return</span> decoded, rx_symbols
+
+<span class="code-comment"># ============== LINK BUDGET ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">calculate_link_budget</span>(distance_km):
+    <span class="code-string">"""Calculate link budget for QPSK MEO ISL"""</span>
+    distance = distance_km * <span class="code-number">1000</span>
+
+    tx_power_dbw = <span class="code-number">10</span> * np.log10(<span class="code-class">TX_POWER_W</span>)
+    eirp = tx_power_dbw + <span class="code-class">TX_ANTENNA_GAIN_DBI</span> - <span class="code-class">LINE_LOSS_DB</span>
+    fspl = free_space_path_loss_db(distance)
+    rx_gain = <span class="code-class">RX_ANTENNA_GAIN_DBI</span> - <span class="code-class">LINE_LOSS_DB</span>
+    g_over_t = rx_gain - <span class="code-number">10</span> * np.log10(<span class="code-class">SYSTEM_NOISE_TEMP_K</span>)
+    c_n0 = eirp - fspl - <span class="code-number">0.5</span> + g_over_t + <span class="code-number">228.6</span>
+    <span class="code-comment"># QPSK: 2 bits/symbol, so Eb/N0 = C/N0 - 10*log10(bit_rate)</span>
+    eb_n0 = c_n0 - <span class="code-number">10</span> * np.log10(<span class="code-class">BIT_RATE</span>)
+
+    <span class="code-keyword">return</span> {
+        <span class="code-string">'EIRP_dBW'</span>: eirp,
+        <span class="code-string">'FSPL_dB'</span>: fspl,
+        <span class="code-string">'C_N0_dBHz'</span>: c_n0,
+        <span class="code-string">'Eb_N0_dB'</span>: eb_n0,
+        <span class="code-string">'Bit_Rate_Mbps'</span>: <span class="code-class">BIT_RATE</span> / <span class="code-number">1e6</span>
+    }
+
+<span class="code-comment"># ============== BER CALCULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">theoretical_qpsk_ber</span>(eb_n0_db):
+    <span class="code-string">"""
+    Theoretical QPSK BER in AWGN
+    Same as BPSK when measured per bit (Eb/N0)
+    """</span>
+    <span class="code-keyword">from</span> scipy.special <span class="code-keyword">import</span> erfc
+    eb_n0 = <span class="code-number">10</span> ** (eb_n0_db / <span class="code-number">10</span>)
+    <span class="code-keyword">return</span> <span class="code-number">0.5</span> * erfc(np.sqrt(eb_n0))
+
+<span class="code-keyword">def</span> <span class="code-function">theoretical_qpsk_ser</span>(es_n0_db):
+    <span class="code-string">"""
+    Theoretical QPSK Symbol Error Rate
+    Es/N0 = Eb/N0 + 3dB for QPSK (2 bits/symbol)
+    """</span>
+    <span class="code-keyword">from</span> scipy.special <span class="code-keyword">import</span> erfc
+    es_n0 = <span class="code-number">10</span> ** (es_n0_db / <span class="code-number">10</span>)
+    <span class="code-keyword">return</span> erfc(np.sqrt(es_n0/<span class="code-number">2</span>)) - <span class="code-number">0.25</span> * erfc(np.sqrt(es_n0/<span class="code-number">2</span>))**<span class="code-number">2</span>
+
+<span class="code-comment"># ============== MAIN SIMULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_qpsk_isl_simulation</span>(num_bits=<span class="code-number">10000</span>, distance_km=<span class="code-number">15000</span>, doppler_hz=<span class="code-number">5000</span>,
+                             use_rf_processing=<span class="code-keyword">True</span>):
+    <span class="code-string">"""Complete MEO QPSK ISL system simulation with 2.2 GHz RF processing"""</span>
+
+    print(<span class="code-string">f"MEO QPSK ISL Simulation with 2.2 GHz RF Processing"</span>)
+    print(<span class="code-string">f"Carrier Frequency: {CARRIER_FREQ/1e9:.1f} GHz"</span>)
+    print(<span class="code-string">f"Distance: {distance_km} km | Doppler: {doppler_hz/1000:.1f} kHz"</span>)
+    print(<span class="code-string">f"RF Sample Rate: {RF_SAMPLE_RATE/1e6:.1f} MHz | Simulation IF: {SIMULATION_IF/1e6:.1f} MHz"</span>)
+    print()
+
+    <span class="code-comment"># Link budget</span>
+    budget = calculate_link_budget(distance_km)
+    print(<span class="code-string">f"Link Budget: EIRP={budget['EIRP_dBW']:.1f}dBW, FSPL={budget['FSPL_dB']:.1f}dB, Eb/N0={budget['Eb_N0_dB']:.1f}dB"</span>)
+
+    <span class="code-comment"># Generate random data</span>
+    tx_bits = np.random.randint(<span class="code-number">0</span>, <span class="code-number">2</span>, num_bits)
+
+    <span class="code-comment"># Transmitter with RF upconversion to 2.2 GHz</span>
+    tx_rf, tx_baseband, tx_symbols, rrc, num_tx_symbols, rf_sample_rate = \
+        meo_qpsk_transmitter(tx_bits, use_rf_upconversion=use_rf_processing)
+
+    <span class="code-keyword">if</span> use_rf_processing:
+        <span class="code-comment"># RF Channel at 2.2 GHz carrier</span>
+        rx_rf = meo_space_channel_rf(tx_rf, distance_km, doppler_hz,
+                                      budget[<span class="code-string">'Eb_N0_dB'</span>], rf_sample_rate)
+        <span class="code-comment"># Receiver with RF downconversion from 2.2 GHz</span>
+        rx_bits, rx_symbols = meo_qpsk_receiver(
+            rx_rf, rrc, num_tx_symbols, num_bits, doppler_hz,
+            use_rf_downconversion=<span class="code-keyword">True</span>)
+    <span class="code-keyword">else</span>:
+        rx_bits, rx_symbols = meo_qpsk_receiver(
+            tx_baseband, rrc, num_tx_symbols, num_bits, doppler_hz,
+            use_rf_downconversion=<span class="code-keyword">False</span>)
+
+    <span class="code-comment"># Calculate BER</span>
+    min_len = min(len(tx_bits), len(rx_bits))
+    bit_errors = np.sum(tx_bits[:min_len] != rx_bits[:min_len])
+    ber = bit_errors / min_len
+
+    print(<span class="code-string">f"Results: {bit_errors} errors in {min_len} bits, BER={ber:.2e}"</span>)
+
+    <span class="code-keyword">return</span> {<span class="code-string">'tx_bits'</span>: tx_bits, <span class="code-string">'rx_bits'</span>: rx_bits, <span class="code-string">'ber'</span>: ber,
+            <span class="code-string">'tx_symbols'</span>: tx_symbols, <span class="code-string">'rx_symbols'</span>: rx_symbols,
+            <span class="code-string">'carrier_freq_ghz'</span>: <span class="code-class">CARRIER_FREQ</span>/<span class="code-number">1e9</span>, <span class="code-string">'rf_sample_rate'</span>: rf_sample_rate}
+
+<span class="code-comment"># ============== VISUALIZATION HELPERS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">plot_qpsk_constellation</span>(symbols, title=<span class="code-string">"QPSK Constellation"</span>):
+    <span class="code-string">"""Plot QPSK constellation diagram"""</span>
+    <span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+    plt.figure(figsize=(<span class="code-number">8</span>, <span class="code-number">8</span>))
+    plt.scatter(np.real(symbols), np.imag(symbols), alpha=<span class="code-number">0.5</span>, s=<span class="code-number">1</span>)
+    plt.axhline(y=<span class="code-number">0</span>, color=<span class="code-string">'k'</span>, linewidth=<span class="code-number">0.5</span>)
+    plt.axvline(x=<span class="code-number">0</span>, color=<span class="code-string">'k'</span>, linewidth=<span class="code-number">0.5</span>)
+    plt.xlabel(<span class="code-string">'In-Phase (I)'</span>)
+    plt.ylabel(<span class="code-string">'Quadrature (Q)'</span>)
+    plt.title(title)
+    plt.grid(<span class="code-keyword">True</span>, alpha=<span class="code-number">0.3</span>)
+    plt.axis(<span class="code-string">'equal'</span>)
+    plt.show()
+
+<span class="code-comment"># Run simulation with full RF processing at 2.2 GHz</span>
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    results = meo_qpsk_isl_simulation(
+        num_bits=<span class="code-number">10000</span>,           <span class="code-comment"># Reduced for faster RF simulation</span>
+        distance_km=<span class="code-number">15000</span>,
+        doppler_hz=<span class="code-number">5000</span>,
+        use_rf_processing=<span class="code-keyword">True</span>    <span class="code-comment"># Enable 2.2 GHz upconversion/downconversion</span>
+    )
+
+    <span class="code-comment"># Optional: Plot TX and RX constellations</span>
+    <span class="code-keyword">try</span>:
+        <span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+        fig, axes = plt.subplots(<span class="code-number">1</span>, <span class="code-number">2</span>, figsize=(<span class="code-number">12</span>, <span class="code-number">5</span>))
+        axes[<span class="code-number">0</span>].scatter(np.real(results[<span class="code-string">'tx_symbols'</span>]), np.imag(results[<span class="code-string">'tx_symbols'</span>]), s=<span class="code-number">1</span>)
+        axes[<span class="code-number">0</span>].set_title(<span class="code-string">'TX QPSK Constellation'</span>)
+        axes[<span class="code-number">1</span>].scatter(np.real(results[<span class="code-string">'rx_symbols'</span>]), np.imag(results[<span class="code-string">'rx_symbols'</span>]), s=<span class="code-number">1</span>)
+        axes[<span class="code-number">1</span>].set_title(<span class="code-string">f'RX QPSK (After {results["carrier_freq_ghz"]:.1f} GHz Channel)'</span>)
+        plt.suptitle(<span class="code-string">f'QPSK MEO ISL - BER = {results["ber"]:.2e}'</span>)
+        plt.show()
+    <span class="code-keyword">except</span> ImportError:
+        print(<span class="code-string">"matplotlib not available for plotting"</span>)
+</pre>
+            </div>
+        </div>
+
+        <!-- Design Considerations -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">QPSK Space Environment Advantages</div>
+                <ul style="font-size: 11px; line-height: 1.7; padding-left: 18px;">
+                    <li><strong>Double Spectral Efficiency:</strong> 2 bits/symbol vs BPSK's 1 bit/symbol</li>
+                    <li><strong>Same Eb/N0:</strong> Identical BER to BPSK when measured per bit</li>
+                    <li><strong>Constant Envelope:</strong> No amplitude variations - ideal for nonlinear amplifiers</li>
+                    <li><strong>Industry Standard:</strong> DVB-S2, GPS L2C, CCSDS recommendations</li>
+                    <li><strong>Bandwidth Efficient:</strong> Same bandwidth as BPSK, twice the throughput</li>
+                    <li><strong>I/Q Processing:</strong> Compatible with modern SDR architectures</li>
+                </ul>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">Key Design Choices</div>
+                <ul style="font-size: 11px; line-height: 1.7; padding-left: 18px;">
+                    <li><strong>RF Processing:</strong> Full upconversion/downconversion at 2.2 GHz (160 MHz sim IF)</li>
+                    <li><strong>Gray Coding:</strong> Adjacent symbols differ by 1 bit, minimizes BER</li>
+                    <li><strong>Conv. Code R=1/2, K=7:</strong> ~5 dB coding gain, NASA heritage</li>
+                    <li><strong>Differential Encoding:</strong> Resolves 90&#176; phase ambiguity in QPSK</li>
+                    <li><strong>Hilbert Transform:</strong> Accurate RF Doppler shift via analytic signal</li>
+                    <li><strong>Costas Loop:</strong> QPSK carrier recovery with sign(I)Q-sign(Q)I detector</li>
+                </ul>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">Python Dependencies</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Package</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>numpy</td>
+                        <td>Array operations, complex arithmetic, FFT</td>
+                    </tr>
+                    <tr>
+                        <td>scipy.signal</td>
+                        <td>butter, filtfilt, hilbert (RF Doppler)</td>
+                    </tr>
+                    <tr>
+                        <td>scipy.constants</td>
+                        <td>Physical constants (c, k)</td>
+                    </tr>
+                    <tr>
+                        <td>scipy.special</td>
+                        <td>erfc for BER calculation</td>
+                    </tr>
+                    <tr>
+                        <td>matplotlib (optional)</td>
+                        <td>Constellation plotting</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <p style="text-align: center; margin-top: 30px; color: #64748b; font-size: 11px;">
+        QPSK MEO Inter-Satellite Link Block Diagram | 2.2 GHz RF Upconversion/Downconversion | 640 MHz RF Sample Rate | Python Implementation: qpsk_mod_tx_rx_sim.py
+    </p>
+</body>
+</html>

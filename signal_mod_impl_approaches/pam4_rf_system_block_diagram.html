@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAM4 RF Transmitter-Receiver Block Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .diagram-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tx-title { color: #4ade80; }
+        .channel-title { color: #fbbf24; }
+        .rx-title { color: #f87171; }
+
+        .blocks-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 5px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+        .block {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border: 2px solid;
+            border-radius: 10px;
+            padding: 12px 15px;
+            min-width: 120px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        .tx-block { border-color: #4ade80; }
+        .tx-block:hover { box-shadow: 0 10px 30px rgba(74, 222, 128, 0.2); }
+        .channel-block { border-color: #fbbf24; }
+        .channel-block:hover { box-shadow: 0 10px 30px rgba(251, 191, 36, 0.2); }
+        .rx-block { border-color: #f87171; }
+        .rx-block:hover { box-shadow: 0 10px 30px rgba(248, 113, 113, 0.2); }
+
+        .block-name {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .block-detail {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .python-func {
+            font-size: 9px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .arrow {
+            font-size: 24px;
+            color: #64748b;
+            min-width: 30px;
+            text-align: center;
+        }
+        .signal-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: -5px;
+            font-style: italic;
+        }
+
+        /* PAM4 Constellation */
+        .constellation {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .constellation-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            flex: 1;
+            min-width: 280px;
+        }
+        .constellation-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+        .pam4-levels {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 20px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            position: relative;
+        }
+        .pam4-levels::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, #ef4444, #fbbf24, #4ade80, #3b82f6);
+        }
+        .level {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+        .level-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+        }
+        .level-0 .level-dot { background: #ef4444; }
+        .level-1 .level-dot { background: #fbbf24; }
+        .level-2 .level-dot { background: #4ade80; }
+        .level-3 .level-dot { background: #3b82f6; }
+        .level-value {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .level-bits {
+            font-size: 11px;
+            color: #94a3b8;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Python Code Section */
+        .code-section {
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+        .code-block pre {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #c9d1d9;
+        }
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-number { color: #79c0ff; }
+        .code-class { color: #ffa657; }
+
+        /* Parameters Table */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .params-table th {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #00d4ff;
+        }
+        .params-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .params-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        .legend-tx { background: #4ade80; }
+        .legend-channel { background: #fbbf24; }
+        .legend-rx { background: #f87171; }
+
+        /* Antenna SVG */
+        .antenna-icon {
+            width: 40px;
+            height: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PAM4 RF Transmitter-Receiver System</h1>
+    <p class="subtitle">4-Level Pulse Amplitude Modulation Signal Processing Block Diagram for Python Implementation</p>
+
+    <div class="diagram-container">
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-tx"></div>
+                <span>Transmitter (TX)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-channel"></div>
+                <span>Channel</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-rx"></div>
+                <span>Receiver (RX)</span>
+            </div>
+        </div>
+
+        <!-- Transmitter Section -->
+        <div class="section">
+            <div class="section-title tx-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+                TRANSMITTER (TX) - Digital Signal Processing Chain
+            </div>
+            <div class="blocks-row">
+                <div class="block tx-block">
+                    <div class="block-name">Data Source</div>
+                    <div class="block-detail">Binary Bit Stream</div>
+                    <div class="python-func">np.random.randint()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">Serial to Parallel</div>
+                    <div class="block-detail">2 bits/symbol</div>
+                    <div class="python-func">reshape(-1, 2)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">PAM4 Mapper</div>
+                    <div class="block-detail">Gray Coding</div>
+                    <div class="block-detail">00→-3, 01→-1, 10→+1, 11→+3</div>
+                    <div class="python-func">pam4_map()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">Upsampling</div>
+                    <div class="block-detail">Insert Zeros</div>
+                    <div class="block-detail">sps samples/symbol</div>
+                    <div class="python-func">np.zeros() insert</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">Pulse Shaping</div>
+                    <div class="block-detail">Root Raised Cosine</div>
+                    <div class="block-detail">α = 0.35</div>
+                    <div class="python-func">rrc_filter()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">DAC</div>
+                    <div class="block-detail">Digital to Analog</div>
+                    <div class="block-detail">(Simulated)</div>
+                    <div class="python-func">interpolate()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">RF Upconverter</div>
+                    <div class="block-detail">Mix with Carrier</div>
+                    <div class="block-detail">f_c = carrier freq</div>
+                    <div class="python-func">× cos(2πf_c t)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block tx-block">
+                    <div class="block-name">Power Amp</div>
+                    <div class="block-detail">Gain Stage</div>
+                    <div class="python-func">× gain</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <svg class="antenna-icon" viewBox="0 0 40 40" fill="none" stroke="#4ade80" stroke-width="2">
+                    <path d="M20 35V20M20 20L10 10M20 20L30 10M15 15L25 15"/>
+                    <circle cx="20" cy="8" r="3" fill="none"/>
+                </svg>
+            </div>
+            <div class="signal-label">Baseband → RF Signal</div>
+        </div>
+
+        <!-- Channel Section -->
+        <div class="section">
+            <div class="section-title channel-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                WIRELESS CHANNEL - Propagation Effects
+            </div>
+            <div class="blocks-row">
+                <svg class="antenna-icon" viewBox="0 0 40 40" fill="none" stroke="#4ade80" stroke-width="2">
+                    <path d="M20 35V20M20 20L10 10M20 20L30 10M15 15L25 15"/>
+                    <circle cx="20" cy="8" r="3" fill="none"/>
+                </svg>
+                <div class="arrow">→</div>
+
+                <div class="block channel-block">
+                    <div class="block-name">Free Space Path Loss</div>
+                    <div class="block-detail">Distance Attenuation</div>
+                    <div class="python-func">× 10^(-PL/20)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block channel-block">
+                    <div class="block-name">Multipath Fading</div>
+                    <div class="block-detail">Rayleigh/Rician</div>
+                    <div class="block-detail">(Optional)</div>
+                    <div class="python-func">np.convolve(h)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block channel-block">
+                    <div class="block-name">AWGN</div>
+                    <div class="block-detail">Additive White</div>
+                    <div class="block-detail">Gaussian Noise</div>
+                    <div class="python-func">+ N(0, σ²)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block channel-block">
+                    <div class="block-name">Phase Noise</div>
+                    <div class="block-detail">Oscillator Jitter</div>
+                    <div class="block-detail">(Optional)</div>
+                    <div class="python-func">× e^(jφ(t))</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <svg class="antenna-icon" viewBox="0 0 40 40" fill="none" stroke="#f87171" stroke-width="2">
+                    <path d="M20 35V20M20 20L10 10M20 20L30 10M15 15L25 15"/>
+                    <circle cx="20" cy="8" r="3" fill="none"/>
+                </svg>
+            </div>
+            <div class="signal-label">TX Antenna → RX Antenna (RF Propagation)</div>
+        </div>
+
+        <!-- Receiver Section -->
+        <div class="section">
+            <div class="section-title rx-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                </svg>
+                RECEIVER (RX) - Digital Signal Processing Chain
+            </div>
+            <div class="blocks-row">
+                <svg class="antenna-icon" viewBox="0 0 40 40" fill="none" stroke="#f87171" stroke-width="2">
+                    <path d="M20 35V20M20 20L10 10M20 20L30 10M15 15L25 15"/>
+                    <circle cx="20" cy="8" r="3" fill="none"/>
+                </svg>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">LNA</div>
+                    <div class="block-detail">Low Noise Amp</div>
+                    <div class="python-func">× lna_gain</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">RF Downconverter</div>
+                    <div class="block-detail">Mix with LO</div>
+                    <div class="block-detail">f_c = carrier freq</div>
+                    <div class="python-func">× cos(2πf_c t)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Low Pass Filter</div>
+                    <div class="block-detail">Remove 2f_c</div>
+                    <div class="block-detail">Component</div>
+                    <div class="python-func">butter_lpf()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">AGC</div>
+                    <div class="block-detail">Auto Gain Control</div>
+                    <div class="python-func">normalize()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">ADC</div>
+                    <div class="block-detail">Analog to Digital</div>
+                    <div class="block-detail">(Simulated)</div>
+                    <div class="python-func">quantize()</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Matched Filter</div>
+                    <div class="block-detail">Root Raised Cosine</div>
+                    <div class="block-detail">Maximize SNR</div>
+                    <div class="python-func">np.convolve(rrc)</div>
+                </div>
+                <div class="arrow">→</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Timing Recovery</div>
+                    <div class="block-detail">Symbol Sync</div>
+                    <div class="block-detail">Mueller-Muller</div>
+                    <div class="python-func">mm_ted()</div>
+                </div>
+            </div>
+            <div class="blocks-row" style="justify-content: flex-end; padding-right: 50px;">
+                <div class="block rx-block">
+                    <div class="block-name">Data Sink</div>
+                    <div class="block-detail">Recovered Bits</div>
+                    <div class="python-func">output_bits</div>
+                </div>
+                <div class="arrow">←</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Parallel to Serial</div>
+                    <div class="block-detail">2 bits/symbol</div>
+                    <div class="python-func">flatten()</div>
+                </div>
+                <div class="arrow">←</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">PAM4 Demapper</div>
+                    <div class="block-detail">Symbol to Bits</div>
+                    <div class="python-func">pam4_demap()</div>
+                </div>
+                <div class="arrow">←</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Symbol Slicer</div>
+                    <div class="block-detail">Decision Thresholds</div>
+                    <div class="block-detail">-2, 0, +2</div>
+                    <div class="python-func">np.digitize()</div>
+                </div>
+                <div class="arrow">←</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Equalizer</div>
+                    <div class="block-detail">LMS/RLS Adaptive</div>
+                    <div class="block-detail">(Optional)</div>
+                    <div class="python-func">lms_equalizer()</div>
+                </div>
+                <div class="arrow">←</div>
+
+                <div class="block rx-block">
+                    <div class="block-name">Downsampling</div>
+                    <div class="block-detail">1 sample/symbol</div>
+                    <div class="python-func">[::sps]</div>
+                </div>
+                <div class="arrow">←</div>
+            </div>
+            <div class="signal-label">RF Signal → Recovered Baseband Data</div>
+        </div>
+
+        <!-- PAM4 Constellation -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">PAM4 Symbol Mapping (Gray Coded)</div>
+                <div class="pam4-levels">
+                    <div class="level level-0">
+                        <div class="level-dot"></div>
+                        <div class="level-value">-3</div>
+                        <div class="level-bits">00</div>
+                    </div>
+                    <div class="level level-1">
+                        <div class="level-dot"></div>
+                        <div class="level-value">-1</div>
+                        <div class="level-bits">01</div>
+                    </div>
+                    <div class="level level-2">
+                        <div class="level-dot"></div>
+                        <div class="level-value">+1</div>
+                        <div class="level-bits">10</div>
+                    </div>
+                    <div class="level level-3">
+                        <div class="level-dot"></div>
+                        <div class="level-value">+3</div>
+                        <div class="level-bits">11</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">System Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Symbol</th>
+                        <th>Typical Value</th>
+                    </tr>
+                    <tr>
+                        <td>Symbol Rate</td>
+                        <td>R_s</td>
+                        <td>1 MSym/s</td>
+                    </tr>
+                    <tr>
+                        <td>Bit Rate</td>
+                        <td>R_b</td>
+                        <td>2 × R_s = 2 Mbps</td>
+                    </tr>
+                    <tr>
+                        <td>Samples per Symbol</td>
+                        <td>sps</td>
+                        <td>8</td>
+                    </tr>
+                    <tr>
+                        <td>Carrier Frequency</td>
+                        <td>f_c</td>
+                        <td>100 MHz</td>
+                    </tr>
+                    <tr>
+                        <td>Roll-off Factor</td>
+                        <td>α</td>
+                        <td>0.35</td>
+                    </tr>
+                    <tr>
+                        <td>Filter Span</td>
+                        <td>N_taps</td>
+                        <td>10 symbols</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Python Implementation -->
+        <div class="section code-section">
+            <div class="section-title" style="color: #00d4ff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+                </svg>
+                Python Implementation Reference
+            </div>
+            <div class="code-block">
+                <pre><span class="code-comment">"""
+PAM4 RF Transmitter-Receiver System Implementation
+Complete signal processing chain for 4-level pulse amplitude modulation
+"""</span>
+
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">from</span> scipy <span class="code-keyword">import</span> signal
+<span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> butter, filtfilt
+
+<span class="code-comment"># ============== SYSTEM PARAMETERS ==============</span>
+<span class="code-class">SYMBOL_RATE</span> = <span class="code-number">1e6</span>          <span class="code-comment"># 1 MSym/s</span>
+<span class="code-class">SAMPLES_PER_SYMBOL</span> = <span class="code-number">8</span>      <span class="code-comment"># Oversampling factor</span>
+<span class="code-class">SAMPLE_RATE</span> = <span class="code-class">SYMBOL_RATE</span> * <span class="code-class">SAMPLES_PER_SYMBOL</span>
+<span class="code-class">CARRIER_FREQ</span> = <span class="code-number">100e6</span>        <span class="code-comment"># 100 MHz carrier</span>
+<span class="code-class">ROLLOFF</span> = <span class="code-number">0.35</span>              <span class="code-comment"># RRC roll-off factor</span>
+<span class="code-class">FILTER_SPAN</span> = <span class="code-number">10</span>             <span class="code-comment"># Filter span in symbols</span>
+
+<span class="code-comment"># PAM4 symbol mapping (Gray coded)</span>
+<span class="code-class">PAM4_LEVELS</span> = np.array([-<span class="code-number">3</span>, -<span class="code-number">1</span>, <span class="code-number">1</span>, <span class="code-number">3</span>])
+<span class="code-class">PAM4_MAP</span> = {(<span class="code-number">0</span>,<span class="code-number">0</span>): -<span class="code-number">3</span>, (<span class="code-number">0</span>,<span class="code-number">1</span>): -<span class="code-number">1</span>, (<span class="code-number">1</span>,<span class="code-number">0</span>): <span class="code-number">1</span>, (<span class="code-number">1</span>,<span class="code-number">1</span>): <span class="code-number">3</span>}
+
+<span class="code-comment"># ============== TRANSMITTER FUNCTIONS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">generate_random_bits</span>(num_bits):
+    <span class="code-string">"""Generate random binary data source"""</span>
+    <span class="code-keyword">return</span> np.random.randint(<span class="code-number">0</span>, <span class="code-number">2</span>, num_bits)
+
+<span class="code-keyword">def</span> <span class="code-function">bits_to_pam4_symbols</span>(bits):
+    <span class="code-string">"""Map bit pairs to PAM4 symbols using Gray coding"""</span>
+    <span class="code-comment"># Ensure even number of bits</span>
+    <span class="code-keyword">if</span> len(bits) % <span class="code-number">2</span> != <span class="code-number">0</span>:
+        bits = np.append(bits, <span class="code-number">0</span>)
+
+    <span class="code-comment"># Reshape into pairs and map to symbols</span>
+    bit_pairs = bits.reshape(-<span class="code-number">1</span>, <span class="code-number">2</span>)
+    symbols = np.array([<span class="code-class">PAM4_MAP</span>[tuple(pair)] <span class="code-keyword">for</span> pair <span class="code-keyword">in</span> bit_pairs])
+    <span class="code-keyword">return</span> symbols
+
+<span class="code-keyword">def</span> <span class="code-function">rrc_filter</span>(num_taps, alpha, sps):
+    <span class="code-string">"""Design Root Raised Cosine pulse shaping filter"""</span>
+    t = np.arange(-num_taps//<span class="code-number">2</span>, num_taps//<span class="code-number">2</span> + <span class="code-number">1</span>) / sps
+    h = np.zeros_like(t, dtype=float)
+
+    <span class="code-keyword">for</span> i, ti <span class="code-keyword">in</span> enumerate(t):
+        <span class="code-keyword">if</span> ti == <span class="code-number">0</span>:
+            h[i] = <span class="code-number">1</span> + alpha * (<span class="code-number">4</span>/np.pi - <span class="code-number">1</span>)
+        <span class="code-keyword">elif</span> abs(ti) == <span class="code-number">1</span>/(<span class="code-number">4</span>*alpha):
+            h[i] = alpha/np.sqrt(<span class="code-number">2</span>) * ((<span class="code-number">1</span>+<span class="code-number">2</span>/np.pi)*np.sin(np.pi/(<span class="code-number">4</span>*alpha)) +
+                                         (<span class="code-number">1</span>-<span class="code-number">2</span>/np.pi)*np.cos(np.pi/(<span class="code-number">4</span>*alpha)))
+        <span class="code-keyword">else</span>:
+            num = np.sin(np.pi*ti*(<span class="code-number">1</span>-alpha)) + <span class="code-number">4</span>*alpha*ti*np.cos(np.pi*ti*(<span class="code-number">1</span>+alpha))
+            den = np.pi*ti*(<span class="code-number">1</span> - (<span class="code-number">4</span>*alpha*ti)**<span class="code-number">2</span>)
+            h[i] = num / den
+
+    <span class="code-keyword">return</span> h / np.sqrt(np.sum(h**<span class="code-number">2</span>))  <span class="code-comment"># Normalize</span>
+
+<span class="code-keyword">def</span> <span class="code-function">upsample_and_filter</span>(symbols, sps, rrc):
+    <span class="code-string">"""Upsample symbols and apply pulse shaping"""</span>
+    <span class="code-comment"># Insert zeros for upsampling</span>
+    upsampled = np.zeros(len(symbols) * sps)
+    upsampled[::sps] = symbols
+
+    <span class="code-comment"># Apply RRC filter</span>
+    shaped = np.convolve(upsampled, rrc, mode=<span class="code-string">'same'</span>)
+    <span class="code-keyword">return</span> shaped
+
+<span class="code-keyword">def</span> <span class="code-function">rf_upconvert</span>(baseband, carrier_freq, sample_rate):
+    <span class="code-string">"""Upconvert baseband signal to RF carrier"""</span>
+    t = np.arange(len(baseband)) / sample_rate
+    carrier = np.cos(<span class="code-number">2</span> * np.pi * carrier_freq * t)
+    rf_signal = baseband * carrier
+    <span class="code-keyword">return</span> rf_signal
+
+<span class="code-comment"># ============== CHANNEL FUNCTIONS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">awgn_channel</span>(signal, snr_db):
+    <span class="code-string">"""Add white Gaussian noise to achieve target SNR"""</span>
+    signal_power = np.mean(signal**<span class="code-number">2</span>)
+    snr_linear = <span class="code-number">10</span>**(snr_db/<span class="code-number">10</span>)
+    noise_power = signal_power / snr_linear
+    noise = np.sqrt(noise_power) * np.random.randn(len(signal))
+    <span class="code-keyword">return</span> signal + noise
+
+<span class="code-keyword">def</span> <span class="code-function">multipath_channel</span>(signal, taps=[<span class="code-number">1.0</span>, <span class="code-number">0.3</span>, <span class="code-number">0.1</span>]):
+    <span class="code-string">"""Apply multipath fading channel"""</span>
+    <span class="code-keyword">return</span> np.convolve(signal, taps, mode=<span class="code-string">'same'</span>)
+
+<span class="code-comment"># ============== RECEIVER FUNCTIONS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">rf_downconvert</span>(rf_signal, carrier_freq, sample_rate, cutoff_ratio=<span class="code-number">0.2</span>):
+    <span class="code-string">"""Downconvert RF signal to baseband"""</span>
+    t = np.arange(len(rf_signal)) / sample_rate
+    lo = np.cos(<span class="code-number">2</span> * np.pi * carrier_freq * t)
+    mixed = rf_signal * lo * <span class="code-number">2</span>  <span class="code-comment"># Factor of 2 to recover amplitude</span>
+
+    <span class="code-comment"># Low-pass filter to remove 2*fc component</span>
+    nyq = sample_rate / <span class="code-number">2</span>
+    cutoff = cutoff_ratio * nyq
+    b, a = butter(<span class="code-number">5</span>, cutoff/nyq, btype=<span class="code-string">'low'</span>)
+    baseband = filtfilt(b, a, mixed)
+    <span class="code-keyword">return</span> baseband
+
+<span class="code-keyword">def</span> <span class="code-function">matched_filter</span>(signal, rrc):
+    <span class="code-string">"""Apply matched filter (same as TX RRC)"""</span>
+    <span class="code-keyword">return</span> np.convolve(signal, rrc, mode=<span class="code-string">'same'</span>)
+
+<span class="code-keyword">def</span> <span class="code-function">timing_recovery_downsample</span>(signal, sps, offset=<span class="code-number">0</span>):
+    <span class="code-string">"""Downsample to 1 sample per symbol with timing offset"""</span>
+    <span class="code-keyword">return</span> signal[offset::sps]
+
+<span class="code-keyword">def</span> <span class="code-function">agc_normalize</span>(signal):
+    <span class="code-string">"""Automatic gain control - normalize signal amplitude"""</span>
+    <span class="code-keyword">return</span> signal / np.std(signal) * np.sqrt(<span class="code-number">5</span>)  <span class="code-comment"># Scale to match PAM4 variance</span>
+
+<span class="code-keyword">def</span> <span class="code-function">pam4_slicer</span>(symbols):
+    <span class="code-string">"""Decision device - slice to nearest PAM4 level"""</span>
+    thresholds = [-<span class="code-number">2</span>, <span class="code-number">0</span>, <span class="code-number">2</span>]
+    indices = np.digitize(symbols, thresholds)
+    <span class="code-keyword">return</span> <span class="code-class">PAM4_LEVELS</span>[indices]
+
+<span class="code-keyword">def</span> <span class="code-function">pam4_symbols_to_bits</span>(symbols):
+    <span class="code-string">"""Demap PAM4 symbols back to bits"""</span>
+    <span class="code-class">DEMAP</span> = {-<span class="code-number">3</span>: [<span class="code-number">0</span>,<span class="code-number">0</span>], -<span class="code-number">1</span>: [<span class="code-number">0</span>,<span class="code-number">1</span>], <span class="code-number">1</span>: [<span class="code-number">1</span>,<span class="code-number">0</span>], <span class="code-number">3</span>: [<span class="code-number">1</span>,<span class="code-number">1</span>]}
+    bits = np.array([<span class="code-class">DEMAP</span>[int(s)] <span class="code-keyword">for</span> s <span class="code-keyword">in</span> symbols]).flatten()
+    <span class="code-keyword">return</span> bits
+
+<span class="code-keyword">def</span> <span class="code-function">calculate_ber</span>(tx_bits, rx_bits):
+    <span class="code-string">"""Calculate Bit Error Rate"""</span>
+    min_len = min(len(tx_bits), len(rx_bits))
+    errors = np.sum(tx_bits[:min_len] != rx_bits[:min_len])
+    <span class="code-keyword">return</span> errors / min_len
+
+<span class="code-comment"># ============== MAIN SIMULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">pam4_rf_system</span>(num_symbols=<span class="code-number">1000</span>, snr_db=<span class="code-number">20</span>):
+    <span class="code-string">"""Complete PAM4 RF TX/RX system simulation"""</span>
+
+    <span class="code-comment"># Design RRC filter</span>
+    num_taps = <span class="code-class">FILTER_SPAN</span> * <span class="code-class">SAMPLES_PER_SYMBOL</span> + <span class="code-number">1</span>
+    rrc = rrc_filter(num_taps, <span class="code-class">ROLLOFF</span>, <span class="code-class">SAMPLES_PER_SYMBOL</span>)
+
+    <span class="code-comment"># ===== TRANSMITTER =====</span>
+    tx_bits = generate_random_bits(num_symbols * <span class="code-number">2</span>)
+    tx_symbols = bits_to_pam4_symbols(tx_bits)
+    tx_shaped = upsample_and_filter(tx_symbols, <span class="code-class">SAMPLES_PER_SYMBOL</span>, rrc)
+    tx_rf = rf_upconvert(tx_shaped, <span class="code-class">CARRIER_FREQ</span>, <span class="code-class">SAMPLE_RATE</span>)
+
+    <span class="code-comment"># ===== CHANNEL =====</span>
+    rx_rf = awgn_channel(tx_rf, snr_db)
+
+    <span class="code-comment"># ===== RECEIVER =====</span>
+    rx_baseband = rf_downconvert(rx_rf, <span class="code-class">CARRIER_FREQ</span>, <span class="code-class">SAMPLE_RATE</span>)
+    rx_filtered = matched_filter(rx_baseband, rrc)
+    rx_normalized = agc_normalize(rx_filtered)
+    rx_samples = timing_recovery_downsample(rx_normalized, <span class="code-class">SAMPLES_PER_SYMBOL</span>,
+                                            offset=num_taps//<span class="code-number">2</span>)
+    rx_symbols = pam4_slicer(rx_samples[:num_symbols])
+    rx_bits = pam4_symbols_to_bits(rx_symbols)
+
+    <span class="code-comment"># Calculate BER</span>
+    ber = calculate_ber(tx_bits, rx_bits)
+
+    <span class="code-keyword">return</span> {
+        <span class="code-string">'tx_bits'</span>: tx_bits,
+        <span class="code-string">'tx_symbols'</span>: tx_symbols,
+        <span class="code-string">'rx_symbols'</span>: rx_symbols,
+        <span class="code-string">'rx_bits'</span>: rx_bits,
+        <span class="code-string">'ber'</span>: ber
+    }
+
+<span class="code-comment"># Run simulation</span>
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    results = pam4_rf_system(num_symbols=<span class="code-number">10000</span>, snr_db=<span class="code-number">25</span>)
+    print(<span class="code-string">f"Bit Error Rate: </span>{results[<span class="code-string">'ber'</span>]:<span class="code-number">.6</span>f}<span class="code-string">"</span>)</pre>
+            </div>
+        </div>
+
+        <!-- Performance Notes -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">Key Design Considerations</div>
+                <ul style="font-size: 12px; line-height: 1.8; padding-left: 20px;">
+                    <li><strong>Gray Coding:</strong> Minimizes bit errors - adjacent symbols differ by 1 bit</li>
+                    <li><strong>RRC Filter:</strong> TX and RX filters combine to form Raised Cosine (zero ISI)</li>
+                    <li><strong>Timing Recovery:</strong> Critical for correct symbol sampling instant</li>
+                    <li><strong>AGC:</strong> Normalizes signal before slicing to handle varying channel gain</li>
+                    <li><strong>Decision Thresholds:</strong> Optimal at midpoints: -2, 0, +2</li>
+                </ul>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">SNR Requirements (Target BER = 10⁻⁶)</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Modulation</th>
+                        <th>Required Eb/N0</th>
+                        <th>Spectral Efficiency</th>
+                    </tr>
+                    <tr>
+                        <td>PAM2 (NRZ)</td>
+                        <td>~10.5 dB</td>
+                        <td>1 bit/symbol</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PAM4</strong></td>
+                        <td><strong>~17 dB</strong></td>
+                        <td><strong>2 bits/symbol</strong></td>
+                    </tr>
+                    <tr>
+                        <td>PAM8</td>
+                        <td>~22 dB</td>
+                        <td>3 bits/symbol</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <p style="text-align: center; margin-top: 30px; color: #64748b; font-size: 11px;">
+        PAM4 RF System Block Diagram | Signal Processing Reference for Python Implementation
+    </p>
+</body>
+</html>

@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broadcast FM MEO Space-Based Inter-Satellite Link Block Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ff6b35;
+            text-shadow: 0 0 15px rgba(255, 107, 53, 0.7);
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .orbit-badge {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .orbit-badge span {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .diagram-container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tx-title { color: #4ade80; }
+        .channel-title { color: #fbbf24; }
+        .rx-title { color: #f87171; }
+        .space-title { color: #a78bfa; }
+
+        .blocks-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
+        .block {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 105px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        .block-small {
+            min-width: 90px;
+            padding: 8px 10px;
+        }
+        .tx-block { border-color: #4ade80; }
+        .tx-block:hover { box-shadow: 0 10px 30px rgba(74, 222, 128, 0.2); }
+        .channel-block { border-color: #fbbf24; }
+        .channel-block:hover { box-shadow: 0 10px 30px rgba(251, 191, 36, 0.2); }
+        .rx-block { border-color: #f87171; }
+        .rx-block:hover { box-shadow: 0 10px 30px rgba(248, 113, 113, 0.2); }
+        .space-block { border-color: #a78bfa; background: linear-gradient(145deg, #3d2d58, #1a1a2c); }
+        .space-block:hover { box-shadow: 0 10px 30px rgba(167, 139, 250, 0.2); }
+
+        .block-name {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .block-detail {
+            font-size: 9px;
+            color: #94a3b8;
+        }
+        .python-func {
+            font-size: 8px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            margin-top: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .arrow {
+            font-size: 20px;
+            color: #64748b;
+            min-width: 20px;
+            text-align: center;
+        }
+        .signal-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: -3px;
+            font-style: italic;
+        }
+
+        /* Satellite SVG */
+        .satellite-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        /* Space visualization */
+        .space-vis {
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .space-vis::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(2px 2px at 20px 30px, white, transparent),
+                              radial-gradient(2px 2px at 40px 70px, white, transparent),
+                              radial-gradient(1px 1px at 90px 40px, white, transparent),
+                              radial-gradient(2px 2px at 130px 80px, white, transparent),
+                              radial-gradient(1px 1px at 160px 30px, white, transparent);
+            background-size: 200px 100px;
+            opacity: 0.3;
+        }
+        .earth-icon {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(180deg, #4ade80 0%, #2563eb 50%, #1e40af 100%);
+            border-radius: 80px 80px 0 0;
+            opacity: 0.6;
+        }
+        .orbit-path {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 60px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        /* Constellation */
+        .constellation {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .constellation-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            flex: 1;
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .constellation-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ff6b35;
+        }
+
+        /* FM Spectrum Visualization */
+        .fm-spectrum {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            position: relative;
+        }
+        .fm-diagram {
+            position: relative;
+            width: 280px;
+            height: 120px;
+        }
+        .fm-carrier {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 60px;
+            background: #ff6b35;
+            border-radius: 2px;
+        }
+        .fm-sideband {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            background: #f7931e;
+            border-radius: 2px;
+        }
+        .fm-sideband-1l { left: 30%; height: 45px; }
+        .fm-sideband-1r { right: 30%; height: 45px; }
+        .fm-sideband-2l { left: 20%; height: 30px; }
+        .fm-sideband-2r { right: 20%; height: 30px; }
+        .fm-sideband-3l { left: 10%; height: 18px; }
+        .fm-sideband-3r { right: 10%; height: 18px; }
+        .fm-axis {
+            position: absolute;
+            bottom: 20px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .fm-label {
+            position: absolute;
+            font-size: 9px;
+            color: #94a3b8;
+        }
+        .fm-label-fc { bottom: 5px; left: 50%; transform: translateX(-50%); color: #ff6b35; }
+        .fm-label-dev { bottom: 5px; left: 20%; }
+        .fm-label-dev2 { bottom: 5px; right: 20%; }
+        .fm-label-bw { top: 5px; left: 50%; transform: translateX(-50%); color: #fbbf24; }
+
+        /* Python Code Section */
+        .code-section {
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .code-block pre {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #c9d1d9;
+        }
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-number { color: #79c0ff; }
+        .code-class { color: #ffa657; }
+
+        /* Parameters Table */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        .params-table th {
+            background: rgba(255, 107, 53, 0.2);
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #ff6b35;
+        }
+        .params-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .params-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .legend-tx { background: #4ade80; }
+        .legend-channel { background: #fbbf24; }
+        .legend-rx { background: #f87171; }
+        .legend-space { background: #a78bfa; }
+
+        /* Link budget */
+        .link-budget {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(255, 107, 53, 0.1));
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .link-budget-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #a78bfa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .budget-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+        }
+        .budget-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        .budget-label { color: #94a3b8; }
+        .budget-value { color: #fff; font-family: 'Courier New', monospace; }
+        .budget-positive { color: #4ade80; }
+        .budget-negative { color: #f87171; }
+
+        /* Subsection styling */
+        .subsection {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid;
+        }
+        .subsection-tx { border-left-color: #4ade80; }
+        .subsection-space { border-left-color: #a78bfa; }
+        .subsection-rx { border-left-color: #f87171; }
+        .subsection-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #94a3b8;
+        }
+
+        /* FM Advantage Box */
+        .advantage-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .advantage-title {
+            color: #ff6b35;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .advantage-list {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Broadcast FM MEO Space-Based Inter-Satellite Link (ISL)</h1>
+    <p class="subtitle">Frequency Modulation for Medium Earth Orbit Crosslink Communications</p>
+    <div class="orbit-badge">
+        <span>MEO ALTITUDE: 8,000 - 20,200 km | ISL RANGE: 1,000 - 45,000 km | FM: Continuous Analog/Digital Baseband</span>
+    </div>
+
+    <div class="diagram-container">
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-tx"></div>
+                <span>TX Spacecraft</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-space"></div>
+                <span>Space-Specific Processing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-channel"></div>
+                <span>Space Channel</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-rx"></div>
+                <span>RX Spacecraft</span>
+            </div>
+        </div>
+
+        <!-- FM Advantage -->
+        <div class="advantage-box">
+            <div class="advantage-title">Broadcast FM Advantages for Space Communications</div>
+            <div class="advantage-list">
+                <strong>Constant Envelope:</strong> Ideal for nonlinear SSPA/TWTA amplifiers - no AM-to-PM distortion |
+                <strong>Noise Immunity:</strong> FM improvement factor provides SNR gain above threshold |
+                <strong>Capture Effect:</strong> Stronger signal dominates, rejecting interference |
+                <strong>Wideband:</strong> Carson's Rule bandwidth allows high-fidelity analog or high-rate digital transmission |
+                <strong>Heritage:</strong> Used in analog video downlinks, voice communications, and telemetry systems
+            </div>
+        </div>
+
+        <!-- TX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title tx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                TX SPACECRAFT - MEO Satellite FM Transmitter Chain
+            </div>
+
+            <!-- Baseband Processing Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">BASEBAND LAYER - Source Processing & Pre-Emphasis</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Baseband Source</div>
+                        <div class="block-detail">Audio/Data/Video</div>
+                        <div class="block-detail">0 - 15 kHz BW</div>
+                        <div class="python-func">baseband_source()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Anti-Alias LPF</div>
+                        <div class="block-detail">fc = 15 kHz</div>
+                        <div class="block-detail">Butterworth</div>
+                        <div class="python-func">lowpass_filter()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">ADC Sampling</div>
+                        <div class="block-detail">fs = 48 kHz</div>
+                        <div class="block-detail">16-bit Resolution</div>
+                        <div class="python-func">adc_sample()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Pre-Emphasis</div>
+                        <div class="block-detail">75 us Time Const</div>
+                        <div class="block-detail">HF Boost</div>
+                        <div class="python-func">pre_emphasis()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Peak Limiter</div>
+                        <div class="block-detail">Deviation Control</div>
+                        <div class="block-detail">Prevents Overmod</div>
+                        <div class="python-func">peak_limiter()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Interpolator</div>
+                        <div class="block-detail">Upsample 10x</div>
+                        <div class="block-detail">fs = 480 kHz</div>
+                        <div class="python-func">interpolate()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FM Modulation Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">FM MODULATION LAYER - Frequency Modulation & RF Processing</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">FM Modulator</div>
+                        <div class="block-detail">kf = 75 kHz/V</div>
+                        <div class="block-detail">Phase Accumulator</div>
+                        <div class="python-func">fm_modulate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">NCO/DDS</div>
+                        <div class="block-detail">Direct Digital</div>
+                        <div class="block-detail">Synthesis</div>
+                        <div class="python-func">nco_generate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">DAC</div>
+                        <div class="block-detail">14-bit Resolution</div>
+                        <div class="block-detail">Rad-Hard</div>
+                        <div class="python-func">dac_convert()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">IF Filter</div>
+                        <div class="block-detail">70 MHz IF</div>
+                        <div class="block-detail">BW = 200 kHz</div>
+                        <div class="python-func">if_bandpass()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">RF Upconvert</div>
+                        <div class="block-detail">S-Band</div>
+                        <div class="block-detail">2.2 GHz Carrier</div>
+                        <div class="python-func">rf_upconvert()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">SSPA</div>
+                        <div class="block-detail">10-20W Output</div>
+                        <div class="block-detail">Space Qualified</div>
+                        <div class="python-func">sspa_model()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">Parabolic Dish</div>
+                        <div class="block-detail">G = 30-35 dBi</div>
+                        <div class="python-func">antenna_gain()</div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-label">Baseband Audio/Data → S-Band FM RF Transmission (2.2 GHz ISL, BW = 200 kHz)</div>
+        </div>
+
+        <!-- Space Channel Section -->
+        <div class="section">
+            <div class="section-title channel-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                MEO SPACE CHANNEL - Inter-Satellite Link Propagation
+            </div>
+
+            <!-- Space Visualization -->
+            <div class="space-vis">
+                <div class="orbit-path"></div>
+                <div class="earth-icon"></div>
+                <div class="blocks-row" style="justify-content: center; position: relative; z-index: 2;">
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Free Space Loss</div>
+                        <div class="block-detail">FSPL @ 2.2 GHz</div>
+                        <div class="block-detail">180-200 dB</div>
+                        <div class="python-func">fspl_meo()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Doppler Shift</div>
+                        <div class="block-detail">±7 kHz max</div>
+                        <div class="block-detail">MEO Velocity</div>
+                        <div class="python-func">doppler_shift()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Pointing Loss</div>
+                        <div class="block-detail">Tracking Error</div>
+                        <div class="block-detail">0.1-0.5 dB</div>
+                        <div class="python-func">pointing_loss()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Space Noise</div>
+                        <div class="block-detail">Cosmic + Solar</div>
+                        <div class="block-detail">T_sky = 10-50K</div>
+                        <div class="python-func">space_noise()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">AWGN</div>
+                        <div class="block-detail">Thermal Noise</div>
+                        <div class="block-detail">T_sys = 300K</div>
+                        <div class="python-func">awgn_channel()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Phase Noise</div>
+                        <div class="block-detail">Oscillator Drift</div>
+                        <div class="block-detail">Thermal Cycling</div>
+                        <div class="python-func">phase_noise()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Propagation Delay</div>
+                        <div class="block-detail">3-150 ms</div>
+                        <div class="block-detail">Range Dependent</div>
+                        <div class="python-func">prop_delay()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">→</div>
+
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="signal-label">TX Satellite (MEO) → RX Satellite (MEO) | S-Band FM ISL @ 2.2 GHz | BW = 200 kHz</div>
+        </div>
+
+        <!-- RX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title rx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                RX SPACECRAFT - MEO Satellite FM Receiver Chain
+            </div>
+
+            <!-- RF Front End -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">RF FRONT END - Antenna & Downconversion</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">Parabolic Dish</div>
+                        <div class="block-detail">G = 30-35 dBi</div>
+                        <div class="python-func">antenna_gain()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">LNA</div>
+                        <div class="block-detail">GaAs HEMT</div>
+                        <div class="block-detail">NF = 1.0 dB</div>
+                        <div class="python-func">lna_amplify()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">RF BPF</div>
+                        <div class="block-detail">S-Band Select</div>
+                        <div class="block-detail">Image Reject</div>
+                        <div class="python-func">rf_bandpass()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">RF Downconvert</div>
+                        <div class="block-detail">S-Band → IF</div>
+                        <div class="block-detail">70 MHz IF</div>
+                        <div class="python-func">rf_downconvert()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">IF BPF</div>
+                        <div class="block-detail">BW = 200 kHz</div>
+                        <div class="block-detail">Channel Select</div>
+                        <div class="python-func">if_bandpass()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">AGC</div>
+                        <div class="block-detail">Auto Gain</div>
+                        <div class="block-detail">60 dB Range</div>
+                        <div class="python-func">agc_control()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">ADC</div>
+                        <div class="block-detail">14-bit Rad-Hard</div>
+                        <div class="block-detail">fs = 480 kHz</div>
+                        <div class="python-func">adc_convert()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carrier Recovery & Limiting -->
+            <div class="subsection subsection-space">
+                <div class="subsection-title">CARRIER RECOVERY & LIMITING - Doppler Compensation & Signal Conditioning</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">Doppler Est.</div>
+                        <div class="block-detail">FFT-Based</div>
+                        <div class="block-detail">Coarse AFC</div>
+                        <div class="python-func">doppler_estimate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">AFC Loop</div>
+                        <div class="block-detail">Auto Freq Ctrl</div>
+                        <div class="block-detail">±15 kHz Track</div>
+                        <div class="python-func">afc_loop()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Digital NCO</div>
+                        <div class="block-detail">Freq Correction</div>
+                        <div class="block-detail">Doppler Comp</div>
+                        <div class="python-func">nco_correct()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Hard Limiter</div>
+                        <div class="block-detail">Constant Envelope</div>
+                        <div class="block-detail">AM Rejection</div>
+                        <div class="python-func">hard_limiter()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">IF Filter</div>
+                        <div class="block-detail">Post-Limiter</div>
+                        <div class="block-detail">Harmonic Reject</div>
+                        <div class="python-func">post_limiter_bpf()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FM Demodulation -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">FM DEMODULATION - Frequency Discriminator & Baseband Recovery</div>
+                <div class="blocks-row">
+                    <div class="block rx-block block-small">
+                        <div class="block-name">FM Demod</div>
+                        <div class="block-detail">PLL Discriminator</div>
+                        <div class="block-detail">or Diff. Detector</div>
+                        <div class="python-func">fm_demodulate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">De-Emphasis</div>
+                        <div class="block-detail">75 us Time Const</div>
+                        <div class="block-detail">HF Rolloff</div>
+                        <div class="python-func">de_emphasis()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Baseband LPF</div>
+                        <div class="block-detail">fc = 15 kHz</div>
+                        <div class="block-detail">Noise Reject</div>
+                        <div class="python-func">baseband_lpf()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Decimator</div>
+                        <div class="block-detail">Downsample 10x</div>
+                        <div class="block-detail">fs = 48 kHz</div>
+                        <div class="python-func">decimate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">SNR Estimator</div>
+                        <div class="block-detail">Quality Monitor</div>
+                        <div class="block-detail">Threshold Check</div>
+                        <div class="python-func">snr_estimate()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">DAC Output</div>
+                        <div class="block-detail">16-bit Audio</div>
+                        <div class="block-detail">Analog Out</div>
+                        <div class="python-func">dac_output()</div>
+                    </div>
+                    <div class="arrow">→</div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Data Sink</div>
+                        <div class="block-detail">Recovered</div>
+                        <div class="block-detail">Baseband</div>
+                        <div class="python-func">output_data</div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-label">S-Band FM RF Reception → Recovered Baseband Audio/Data</div>
+        </div>
+
+        <!-- MEO Parameters and Link Budget -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">MEO Orbital Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>Altitude</td>
+                        <td>8,000 - 20,200 km</td>
+                        <td>GPS @ 20,200 km</td>
+                    </tr>
+                    <tr>
+                        <td>Orbital Period</td>
+                        <td>5 - 12 hours</td>
+                        <td>Semi-sync orbits</td>
+                    </tr>
+                    <tr>
+                        <td>Orbital Velocity</td>
+                        <td>3.9 - 4.9 km/s</td>
+                        <td>Altitude dependent</td>
+                    </tr>
+                    <tr>
+                        <td>ISL Range</td>
+                        <td>1,000 - 45,000 km</td>
+                        <td>Same plane max</td>
+                    </tr>
+                    <tr>
+                        <td>Max Doppler</td>
+                        <td>±7 kHz @ 2.2 GHz</td>
+                        <td>Relative velocity</td>
+                    </tr>
+                    <tr>
+                        <td>Propagation Delay</td>
+                        <td>3.3 - 150 ms</td>
+                        <td>One-way</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">FM Spectrum Visualization</div>
+                <div class="fm-spectrum">
+                    <div class="fm-diagram">
+                        <div class="fm-carrier"></div>
+                        <div class="fm-sideband fm-sideband-1l"></div>
+                        <div class="fm-sideband fm-sideband-1r"></div>
+                        <div class="fm-sideband fm-sideband-2l"></div>
+                        <div class="fm-sideband fm-sideband-2r"></div>
+                        <div class="fm-sideband fm-sideband-3l"></div>
+                        <div class="fm-sideband fm-sideband-3r"></div>
+                        <div class="fm-axis"></div>
+                        <div class="fm-label fm-label-fc">fc (2.2 GHz)</div>
+                        <div class="fm-label fm-label-dev">-75 kHz</div>
+                        <div class="fm-label fm-label-dev2">+75 kHz</div>
+                        <div class="fm-label fm-label-bw">Carson BW: 2(75+15) = 180 kHz</div>
+                    </div>
+                </div>
+                <table class="params-table" style="margin-top: 15px;">
+                    <tr>
+                        <th>FM Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Carrier Frequency</td>
+                        <td>2.2 GHz (S-Band)</td>
+                    </tr>
+                    <tr>
+                        <td>Frequency Deviation</td>
+                        <td>±75 kHz</td>
+                    </tr>
+                    <tr>
+                        <td>Modulation Index (beta)</td>
+                        <td>5.0 (Wideband FM)</td>
+                    </tr>
+                    <tr>
+                        <td>Baseband Bandwidth</td>
+                        <td>15 kHz</td>
+                    </tr>
+                    <tr>
+                        <td>Carson's Rule BW</td>
+                        <td>180 kHz</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">System Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>TX</th>
+                        <th>RX</th>
+                    </tr>
+                    <tr>
+                        <td>Antenna Gain</td>
+                        <td>32 dBi</td>
+                        <td>32 dBi</td>
+                    </tr>
+                    <tr>
+                        <td>Antenna Diameter</td>
+                        <td>1.0 m</td>
+                        <td>1.0 m</td>
+                    </tr>
+                    <tr>
+                        <td>TX Power (SSPA)</td>
+                        <td>10 W (10 dBW)</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>System Noise Temp</td>
+                        <td>-</td>
+                        <td>300 K</td>
+                    </tr>
+                    <tr>
+                        <td>LNA Noise Figure</td>
+                        <td>-</td>
+                        <td>1.0 dB</td>
+                    </tr>
+                    <tr>
+                        <td>IF Bandwidth</td>
+                        <td colspan="2">200 kHz</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Link Budget -->
+        <div class="link-budget">
+            <div class="link-budget-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                    <path d="M12 20V10M18 20V4M6 20v-4"/>
+                </svg>
+                MEO ISL Link Budget Analysis - FM (Worst Case: 20,000 km Range)
+            </div>
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">TX Power (SSPA)</span>
+                        <span class="budget-value budget-positive">+10.0 dBW</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+32.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">EIRP</span>
+                        <span class="budget-value budget-positive">+41.0 dBW</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Free Space Path Loss</span>
+                        <span class="budget-value budget-negative">-193.3 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Pointing Loss</span>
+                        <span class="budget-value budget-negative">-0.5 dB</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">RX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+32.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">RX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">System Noise Temp (300K)</span>
+                        <span class="budget-value">24.8 dBK</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">G/T</span>
+                        <span class="budget-value budget-positive">+7.2 dB/K</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">C/N (200 kHz BW)</span>
+                        <span class="budget-value budget-positive">+30.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">FM Threshold (10 dB)</span>
+                        <span class="budget-value">+10.0 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">FM Improvement Factor</span>
+                        <span class="budget-value budget-positive">+22.0 dB</span>
+                    </div>
+                    <div class="budget-row" style="background: rgba(74, 222, 128, 0.1); margin-top: 5px; padding: 8px; border-radius: 5px;">
+                        <span class="budget-label"><strong>Output SNR (Baseband)</strong></span>
+                        <span class="budget-value budget-positive"><strong>+52.0 dB</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FM Theory -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">FM vs Other Modulations for Space</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Modulation</th>
+                        <th>Bandwidth Efficiency</th>
+                        <th>Power Efficiency</th>
+                        <th>SSPA Compatibility</th>
+                    </tr>
+                    <tr style="background: rgba(255, 107, 53, 0.1);">
+                        <td><strong>Wideband FM</strong></td>
+                        <td><strong>Low (beta=5)</strong></td>
+                        <td><strong>Excellent</strong></td>
+                        <td><strong>Excellent</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Narrowband FM</td>
+                        <td>Moderate (beta&lt;1)</td>
+                        <td>Good</td>
+                        <td>Excellent</td>
+                    </tr>
+                    <tr>
+                        <td>AM (DSB-FC)</td>
+                        <td>Low</td>
+                        <td>Poor</td>
+                        <td>Poor</td>
+                    </tr>
+                    <tr>
+                        <td>SSB</td>
+                        <td>High</td>
+                        <td>Good</td>
+                        <td>Poor</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">FM Mathematical Definition</div>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px;">
+                    <div style="margin-bottom: 10px;"><strong>FM Signal:</strong></div>
+                    <div style="color: #ff6b35;">s(t) = A*cos(2*pi*fc*t + 2*pi*kf*integral(m(tau))dtau)</div>
+                    <div style="margin: 15px 0 10px;"><strong>Instantaneous Frequency:</strong></div>
+                    <div style="color: #f7931e;">fi(t) = fc + kf*m(t)</div>
+                    <div style="margin: 15px 0 10px;"><strong>Key Parameters:</strong></div>
+                    <div>kf = 75 kHz/V (freq. sensitivity)</div>
+                    <div>delta_f = 75 kHz (max deviation)</div>
+                    <div>fm = 15 kHz (max baseband freq)</div>
+                    <div>beta = delta_f/fm = 5.0 (modulation index)</div>
+                    <div style="margin: 15px 0 10px;"><strong>Carson's Rule Bandwidth:</strong></div>
+                    <div style="color: #fbbf24;">BW = 2(delta_f + fm) = 2(75 + 15) = 180 kHz</div>
+                    <div style="margin: 15px 0 10px;"><strong>FM Improvement Factor:</strong></div>
+                    <div style="color: #4ade80;">SNRout/SNRin = 3*beta^2*(beta+1) = 22 dB for beta=5</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Python Implementation -->
+        <div class="section code-section">
+            <div class="section-title" style="color: #ff6b35;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" stroke-width="2">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+                </svg>
+                Python Implementation - MEO Space-Based Broadcast FM ISL System
+            </div>
+            <div class="code-block">
+                <pre><span class="code-comment">"""
+Broadcast FM MEO Inter-Satellite Link (ISL) System Implementation
+Space-based signal processing chain for Medium Earth Orbit communications
+Frequency Modulation with Pre/De-emphasis and FM Discriminator
+"""</span>
+
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">from</span> scipy <span class="code-keyword">import</span> signal
+<span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> butter, filtfilt, lfilter, firwin
+<span class="code-keyword">from</span> scipy.constants <span class="code-keyword">import</span> c, k  <span class="code-comment"># speed of light, Boltzmann constant</span>
+
+<span class="code-comment"># ============== MEO ORBITAL CONSTANTS ==============</span>
+<span class="code-class">EARTH_RADIUS</span> = <span class="code-number">6371e3</span>           <span class="code-comment"># meters</span>
+<span class="code-class">EARTH_MU</span> = <span class="code-number">3.986e14</span>             <span class="code-comment"># gravitational parameter m^3/s^2</span>
+<span class="code-class">MEO_ALTITUDE</span> = <span class="code-number">20200e3</span>          <span class="code-comment"># 20,200 km (GPS orbit)</span>
+
+<span class="code-comment"># ============== FM SYSTEM PARAMETERS ==============</span>
+<span class="code-class">CARRIER_FREQ</span> = <span class="code-number">2.2e9</span>            <span class="code-comment"># 2.2 GHz S-band carrier</span>
+<span class="code-class">WAVELENGTH</span> = c / <span class="code-class">CARRIER_FREQ</span>
+<span class="code-class">BASEBAND_BW</span> = <span class="code-number">15e3</span>              <span class="code-comment"># 15 kHz max baseband frequency</span>
+<span class="code-class">FREQ_DEVIATION</span> = <span class="code-number">75e3</span>           <span class="code-comment"># +/-75 kHz frequency deviation</span>
+<span class="code-class">MOD_INDEX</span> = <span class="code-class">FREQ_DEVIATION</span> / <span class="code-class">BASEBAND_BW</span>  <span class="code-comment"># beta = 5.0</span>
+<span class="code-class">CARSON_BW</span> = <span class="code-number">2</span> * (<span class="code-class">FREQ_DEVIATION</span> + <span class="code-class">BASEBAND_BW</span>)  <span class="code-comment"># 180 kHz</span>
+
+<span class="code-comment"># Sampling rates</span>
+<span class="code-class">FS_BASEBAND</span> = <span class="code-number">48e3</span>              <span class="code-comment"># 48 kHz baseband sample rate</span>
+<span class="code-class">FS_IF</span> = <span class="code-number">480e3</span>                   <span class="code-comment"># 480 kHz IF sample rate (10x interpolation)</span>
+<span class="code-class">IF_FREQ</span> = <span class="code-number">70e3</span>                  <span class="code-comment"># 70 kHz intermediate frequency</span>
+
+<span class="code-comment"># Link budget parameters</span>
+<span class="code-class">TX_POWER_W</span> = <span class="code-number">10</span>                  <span class="code-comment"># 10W SSPA</span>
+<span class="code-class">TX_ANTENNA_GAIN_DBI</span> = <span class="code-number">32</span>        <span class="code-comment"># 1.0m dish @ 2.2 GHz</span>
+<span class="code-class">RX_ANTENNA_GAIN_DBI</span> = <span class="code-number">32</span>
+<span class="code-class">SYSTEM_NOISE_TEMP_K</span> = <span class="code-number">300</span>       <span class="code-comment"># Kelvin</span>
+<span class="code-class">LINE_LOSS_DB</span> = <span class="code-number">1.0</span>
+
+<span class="code-comment"># Pre/De-emphasis time constant (75 microseconds for broadcast FM)</span>
+<span class="code-class">TAU_EMPHASIS</span> = <span class="code-number">75e-6</span>            <span class="code-comment"># 75 us time constant</span>
+
+
+<span class="code-comment"># ============== BASEBAND SOURCE ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">generate_baseband_signal</span>(duration, fs=<span class="code-class">FS_BASEBAND</span>, signal_type=<span class="code-string">'tone'</span>):
+    <span class="code-string">"""
+    Generate baseband test signal for FM modulation
+
+    Parameters:
+    -----------
+    duration : float - Signal duration in seconds
+    fs : float - Sample rate in Hz
+    signal_type : str - 'tone', 'multitone', or 'noise'
+
+    Returns:
+    --------
+    t : ndarray - Time vector
+    m : ndarray - Baseband message signal (normalized to +/-1)
+    """</span>
+    t = np.arange(<span class="code-number">0</span>, duration, <span class="code-number">1</span>/fs)
+
+    <span class="code-keyword">if</span> signal_type == <span class="code-string">'tone'</span>:
+        <span class="code-comment"># Single 1 kHz tone</span>
+        m = np.sin(<span class="code-number">2</span> * np.pi * <span class="code-number">1000</span> * t)
+    <span class="code-keyword">elif</span> signal_type == <span class="code-string">'multitone'</span>:
+        <span class="code-comment"># Multi-tone test signal (sum of frequencies)</span>
+        freqs = [<span class="code-number">400</span>, <span class="code-number">1000</span>, <span class="code-number">3000</span>, <span class="code-number">7500</span>, <span class="code-number">12000</span>]
+        m = np.sum([np.sin(<span class="code-number">2</span> * np.pi * f * t) <span class="code-keyword">for</span> f <span class="code-keyword">in</span> freqs], axis=<span class="code-number">0</span>)
+        m = m / np.max(np.abs(m))  <span class="code-comment"># Normalize</span>
+    <span class="code-keyword">elif</span> signal_type == <span class="code-string">'noise'</span>:
+        <span class="code-comment"># Band-limited noise (simulates audio)</span>
+        m = np.random.randn(len(t))
+        b, a = butter(<span class="code-number">6</span>, <span class="code-class">BASEBAND_BW</span>/(<span class="code-number">0.5</span>*fs), btype=<span class="code-string">'low'</span>)
+        m = filtfilt(b, a, m)
+        m = m / np.max(np.abs(m))
+    <span class="code-keyword">else</span>:
+        <span class="code-keyword">raise</span> ValueError(<span class="code-string">f"Unknown signal type: {signal_type}"</span>)
+
+    <span class="code-keyword">return</span> t, m
+
+
+<span class="code-comment"># ============== PRE-EMPHASIS / DE-EMPHASIS FILTERS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">pre_emphasis_filter</span>(signal_in, fs, tau=<span class="code-class">TAU_EMPHASIS</span>):
+    <span class="code-string">"""
+    Apply pre-emphasis filter to boost high frequencies
+    H(s) = 1 + s*tau  (high-frequency boost)
+    """</span>
+    alpha = tau * fs
+    b = np.array([<span class="code-number">1</span> + alpha, -alpha])
+    a = np.array([<span class="code-number">1.0</span>])
+    signal_out = lfilter(b, a, signal_in)
+    signal_out = signal_out / np.max(np.abs(signal_out))
+    <span class="code-keyword">return</span> signal_out
+
+
+<span class="code-keyword">def</span> <span class="code-function">de_emphasis_filter</span>(signal_in, fs, tau=<span class="code-class">TAU_EMPHASIS</span>):
+    <span class="code-string">"""
+    Apply de-emphasis filter to attenuate high frequencies
+    H(s) = 1 / (1 + s*tau)  (low-pass characteristic)
+    """</span>
+    alpha = np.exp(-<span class="code-number">1</span> / (tau * fs))
+    b = np.array([<span class="code-number">1</span> - alpha])
+    a = np.array([<span class="code-number">1</span>, -alpha])
+    signal_out = lfilter(b, a, signal_in)
+    <span class="code-keyword">return</span> signal_out
+
+
+<span class="code-comment"># ============== FM MODULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">fm_modulate</span>(message, fs, fc=<span class="code-class">IF_FREQ</span>, freq_dev=<span class="code-class">FREQ_DEVIATION</span>):
+    <span class="code-string">"""
+    FM modulation using phase accumulator method
+    s(t) = A * cos(2*pi*fc*t + 2*pi*kf*integral(m(t)))
+
+    Parameters:
+    -----------
+    message : ndarray - Baseband message signal (normalized to +/-1)
+    fs : float - Sample rate
+    fc : float - Carrier/IF frequency
+    freq_dev : float - Maximum frequency deviation (Hz)
+
+    Returns:
+    --------
+    fm_signal : ndarray - FM modulated signal
+    inst_freq : ndarray - Instantaneous frequency
+    """</span>
+    <span class="code-comment"># Calculate instantaneous frequency</span>
+    inst_freq = fc + freq_dev * message
+
+    <span class="code-comment"># Phase is integral of instantaneous frequency</span>
+    phase = <span class="code-number">2</span> * np.pi * np.cumsum(inst_freq) / fs
+
+    <span class="code-comment"># Generate FM signal</span>
+    fm_signal = np.cos(phase)
+
+    <span class="code-keyword">return</span> fm_signal, inst_freq
+
+
+<span class="code-keyword">def</span> <span class="code-function">nco_generate</span>(freq, fs, num_samples, phase_offset=<span class="code-number">0</span>):
+    <span class="code-string">"""
+    Numerically Controlled Oscillator (NCO) / DDS
+    """</span>
+    <span class="code-keyword">if</span> np.isscalar(freq):
+        t = np.arange(num_samples) / fs
+        phase = <span class="code-number">2</span> * np.pi * freq * t + phase_offset
+    <span class="code-keyword">else</span>:
+        phase = <span class="code-number">2</span> * np.pi * np.cumsum(freq) / fs + phase_offset
+    nco_out = np.exp(<span class="code-number">1j</span> * phase)
+    <span class="code-keyword">return</span> nco_out
+
+
+<span class="code-comment"># ============== FM DEMODULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">fm_demodulate_diff</span>(fm_signal, fs, freq_dev=<span class="code-class">FREQ_DEVIATION</span>):
+    <span class="code-string">"""
+    FM demodulation using differentiate-and-envelope method
+    The instantaneous frequency is the derivative of the phase
+    """</span>
+    <span class="code-comment"># Convert to analytic signal using Hilbert transform</span>
+    analytic = signal.hilbert(fm_signal)
+
+    <span class="code-comment"># Extract instantaneous phase</span>
+    inst_phase = np.unwrap(np.angle(analytic))
+
+    <span class="code-comment"># Differentiate to get instantaneous frequency</span>
+    inst_freq = np.diff(inst_phase) * fs / (<span class="code-number">2</span> * np.pi)
+    inst_freq = np.append(inst_freq, inst_freq[-<span class="code-number">1</span>])
+
+    <span class="code-comment"># Remove DC and normalize</span>
+    demod = inst_freq - np.mean(inst_freq)
+    demod = demod / freq_dev
+
+    <span class="code-keyword">return</span> demod
+
+
+<span class="code-keyword">def</span> <span class="code-function">fm_demodulate_pll</span>(fm_signal, fs, fc=<span class="code-class">IF_FREQ</span>, freq_dev=<span class="code-class">FREQ_DEVIATION</span>,
+                       loop_bw=<span class="code-number">5000</span>, damping=<span class="code-number">0.707</span>):
+    <span class="code-string">"""
+    FM demodulation using Phase-Locked Loop (PLL)
+    The PLL tracks the instantaneous phase of the FM signal
+    """</span>
+    wn = <span class="code-number">2</span> * np.pi * loop_bw / (damping + <span class="code-number">1</span>/(<span class="code-number">4</span>*damping))
+    K0, Kd = <span class="code-number">1.0</span>, <span class="code-number">1.0</span>
+    tau1 = K0 * Kd / (wn * wn)
+    tau2 = <span class="code-number">2</span> * damping / wn
+
+    phase_estimate = <span class="code-number">0</span>
+    freq_estimate = <span class="code-number">2</span> * np.pi * fc
+    integrator = <span class="code-number">0</span>
+    demod = np.zeros(len(fm_signal))
+
+    <span class="code-keyword">for</span> n <span class="code-keyword">in</span> range(len(fm_signal)):
+        lo_q = -np.sin(phase_estimate)
+        phase_error = fm_signal[n] * lo_q
+        integrator += phase_error / tau1 / fs
+        loop_filter_out = integrator + phase_error * tau2 / tau1
+        freq_estimate = <span class="code-number">2</span> * np.pi * fc + K0 * loop_filter_out
+        phase_estimate += freq_estimate / fs
+        demod[n] = loop_filter_out
+
+    demod = demod / (<span class="code-number">2</span> * np.pi * freq_dev)
+    <span class="code-keyword">return</span> demod
+
+
+<span class="code-comment"># ============== SIGNAL CONDITIONING ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">hard_limiter</span>(signal_in):
+    <span class="code-string">"""Hard limiter - removes amplitude variations"""</span>
+    <span class="code-keyword">return</span> np.sign(signal_in)
+
+
+<span class="code-keyword">def</span> <span class="code-function">interpolate_signal</span>(signal_in, factor):
+    <span class="code-string">"""Interpolate signal by integer factor"""</span>
+    signal_up = np.zeros(len(signal_in) * factor)
+    signal_up[::factor] = signal_in
+    num_taps = <span class="code-number">64</span> * factor + <span class="code-number">1</span>
+    h = firwin(num_taps, <span class="code-number">1.0</span>/factor)
+    signal_out = np.convolve(signal_up, h * factor, mode=<span class="code-string">'same'</span>)
+    <span class="code-keyword">return</span> signal_out
+
+
+<span class="code-keyword">def</span> <span class="code-function">decimate_signal</span>(signal_in, factor):
+    <span class="code-string">"""Decimate signal by integer factor"""</span>
+    num_taps = <span class="code-number">64</span> * factor + <span class="code-number">1</span>
+    h = firwin(num_taps, <span class="code-number">1.0</span>/factor)
+    signal_filtered = np.convolve(signal_in, h, mode=<span class="code-string">'same'</span>)
+    signal_out = signal_filtered[::factor]
+    <span class="code-keyword">return</span> signal_out
+
+
+<span class="code-comment"># ============== SPACE CHANNEL MODEL ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">free_space_path_loss_db</span>(distance_m, freq_hz=<span class="code-class">CARRIER_FREQ</span>):
+    <span class="code-string">"""Calculate free space path loss in dB"""</span>
+    fspl = (<span class="code-number">4</span> * np.pi * distance_m * freq_hz / c) ** <span class="code-number">2</span>
+    <span class="code-keyword">return</span> <span class="code-number">10</span> * np.log10(fspl)
+
+
+<span class="code-keyword">def</span> <span class="code-function">doppler_shift_hz</span>(relative_velocity, freq_hz=<span class="code-class">CARRIER_FREQ</span>):
+    <span class="code-string">"""Calculate Doppler frequency shift"""</span>
+    <span class="code-keyword">return</span> freq_hz * relative_velocity / c
+
+
+<span class="code-keyword">def</span> <span class="code-function">apply_doppler</span>(signal_in, doppler_hz, fs):
+    <span class="code-string">"""Apply Doppler frequency shift to signal"""</span>
+    t = np.arange(len(signal_in)) / fs
+    shift = np.exp(<span class="code-number">1j</span> * <span class="code-number">2</span> * np.pi * doppler_hz * t)
+    <span class="code-keyword">return</span> np.real(signal_in * shift)
+
+
+<span class="code-keyword">def</span> <span class="code-function">add_awgn</span>(signal_in, snr_db, signal_power=<span class="code-keyword">None</span>):
+    <span class="code-string">"""Add Additive White Gaussian Noise"""</span>
+    <span class="code-keyword">if</span> signal_power <span class="code-keyword">is</span> <span class="code-keyword">None</span>:
+        signal_power = np.mean(signal_in ** <span class="code-number">2</span>)
+    snr_linear = <span class="code-number">10</span> ** (snr_db / <span class="code-number">10</span>)
+    noise_power = signal_power / snr_linear
+    noise = np.sqrt(noise_power) * np.random.randn(len(signal_in))
+    <span class="code-keyword">return</span> signal_in + noise
+
+
+<span class="code-comment"># ============== SNR AND QUALITY METRICS ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">calculate_snr_db</span>(signal_clean, signal_noisy):
+    <span class="code-string">"""Calculate SNR between clean and noisy signals"""</span>
+    noise = signal_noisy - signal_clean
+    signal_power = np.mean(signal_clean ** <span class="code-number">2</span>)
+    noise_power = np.mean(noise ** <span class="code-number">2</span>)
+    <span class="code-keyword">if</span> noise_power == <span class="code-number">0</span>:
+        <span class="code-keyword">return</span> np.inf
+    <span class="code-keyword">return</span> <span class="code-number">10</span> * np.log10(signal_power / noise_power)
+
+
+<span class="code-keyword">def</span> <span class="code-function">fm_improvement_factor_db</span>(mod_index):
+    <span class="code-string">"""Calculate FM improvement factor: 3 * beta^2 * (beta + 1)"""</span>
+    improvement = <span class="code-number">3</span> * mod_index ** <span class="code-number">2</span> * (mod_index + <span class="code-number">1</span>)
+    <span class="code-keyword">return</span> <span class="code-number">10</span> * np.log10(improvement)
+
+
+<span class="code-comment"># ============== COMPLETE FM TRANSCEIVER ==============</span>
+
+<span class="code-keyword">class</span> <span class="code-class">FMTransmitter</span>:
+    <span class="code-string">"""FM Transmitter for MEO Space ISL"""</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self, fs_baseband=<span class="code-class">FS_BASEBAND</span>, fs_if=<span class="code-class">FS_IF</span>,
+                 freq_dev=<span class="code-class">FREQ_DEVIATION</span>, if_freq=<span class="code-class">IF_FREQ</span>):
+        self.fs_baseband = fs_baseband
+        self.fs_if = fs_if
+        self.freq_dev = freq_dev
+        self.if_freq = if_freq
+        self.interp_factor = int(fs_if / fs_baseband)
+
+    <span class="code-keyword">def</span> <span class="code-function">transmit</span>(self, message):
+        <span class="code-string">"""Complete FM transmit chain"""</span>
+        msg_preemph = pre_emphasis_filter(message, self.fs_baseband)
+        msg_limited = np.clip(msg_preemph, -<span class="code-number">1</span>, <span class="code-number">1</span>)
+        msg_interp = interpolate_signal(msg_limited, self.interp_factor)
+        fm_signal, _ = fm_modulate(msg_interp, self.fs_if,
+                                   self.if_freq, self.freq_dev)
+        <span class="code-keyword">return</span> fm_signal
+
+
+<span class="code-keyword">class</span> <span class="code-class">FMReceiver</span>:
+    <span class="code-string">"""FM Receiver for MEO Space ISL"""</span>
+
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(self, fs_baseband=<span class="code-class">FS_BASEBAND</span>, fs_if=<span class="code-class">FS_IF</span>,
+                 freq_dev=<span class="code-class">FREQ_DEVIATION</span>, if_freq=<span class="code-class">IF_FREQ</span>,
+                 demod_method=<span class="code-string">'diff'</span>):
+        self.fs_baseband = fs_baseband
+        self.fs_if = fs_if
+        self.freq_dev = freq_dev
+        self.if_freq = if_freq
+        self.decim_factor = int(fs_if / fs_baseband)
+        self.demod_method = demod_method
+
+    <span class="code-keyword">def</span> <span class="code-function">receive</span>(self, fm_signal):
+        <span class="code-string">"""Complete FM receive chain"""</span>
+        fm_limited = hard_limiter(fm_signal)
+
+        <span class="code-keyword">if</span> self.demod_method == <span class="code-string">'diff'</span>:
+            demod = fm_demodulate_diff(fm_limited, self.fs_if, self.freq_dev)
+        <span class="code-keyword">elif</span> self.demod_method == <span class="code-string">'pll'</span>:
+            demod = fm_demodulate_pll(fm_limited, self.fs_if,
+                                      self.if_freq, self.freq_dev)
+        <span class="code-keyword">else</span>:
+            <span class="code-keyword">raise</span> ValueError(<span class="code-string">f"Unknown demod method: {self.demod_method}"</span>)
+
+        demod_dec = decimate_signal(demod, self.decim_factor)
+        demod_deemph = de_emphasis_filter(demod_dec, self.fs_baseband)
+        <span class="code-keyword">return</span> demod_deemph
+
+
+<span class="code-keyword">def</span> <span class="code-function">meo_fm_isl_simulation</span>(duration=<span class="code-number">0.1</span>, snr_db=<span class="code-number">30</span>, doppler_hz=<span class="code-number">5000</span>):
+    <span class="code-string">"""Complete MEO FM Inter-Satellite Link simulation"""</span>
+    t, message = generate_baseband_signal(duration, signal_type=<span class="code-string">'multitone'</span>)
+
+    tx = FMTransmitter()
+    rx = FMReceiver(demod_method=<span class="code-string">'diff'</span>)
+
+    fm_tx = tx.transmit(message)
+    fm_doppler = apply_doppler(fm_tx, doppler_hz, <span class="code-class">FS_IF</span>)
+    fm_noisy = add_awgn(fm_doppler, snr_db)
+    demod = rx.receive(fm_noisy)
+
+    delay = len(message) - len(demod)
+    <span class="code-keyword">if</span> delay > <span class="code-number">0</span>:
+        message_aligned = message[delay//<span class="code-number">2</span>:-delay//<span class="code-number">2</span> <span class="code-keyword">if</span> delay//<span class="code-number">2</span> > <span class="code-number">0</span> <span class="code-keyword">else</span> <span class="code-keyword">None</span>]
+        demod_aligned = demod
+    <span class="code-keyword">else</span>:
+        message_aligned = message
+        demod_aligned = demod[:len(message)]
+
+    output_snr = calculate_snr_db(message_aligned, demod_aligned)
+    fm_improvement = fm_improvement_factor_db(<span class="code-class">MOD_INDEX</span>)
+
+    results = {
+        <span class="code-string">'time'</span>: t,
+        <span class="code-string">'message'</span>: message,
+        <span class="code-string">'demodulated'</span>: demod,
+        <span class="code-string">'input_snr_db'</span>: snr_db,
+        <span class="code-string">'output_snr_db'</span>: output_snr,
+        <span class="code-string">'fm_improvement_db'</span>: fm_improvement,
+        <span class="code-string">'mod_index'</span>: <span class="code-class">MOD_INDEX</span>,
+        <span class="code-string">'carson_bw_hz'</span>: <span class="code-class">CARSON_BW</span>
+    }
+    <span class="code-keyword">return</span> results
+
+
+<span class="code-comment"># ============== MAIN EXECUTION ==============</span>
+
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    print(<span class="code-string">"MEO Space-Based Broadcast FM ISL System"</span>)
+    print(<span class="code-string">"="</span> * <span class="code-number">50</span>)
+    print(<span class="code-string">f"Carrier Frequency: {CARRIER_FREQ/1e9:.1f} GHz (S-Band)"</span>)
+    print(<span class="code-string">f"Frequency Deviation: +/-{FREQ_DEVIATION/1e3:.0f} kHz"</span>)
+    print(<span class="code-string">f"Modulation Index (beta): {MOD_INDEX:.1f}"</span>)
+    print(<span class="code-string">f"Carson's Rule BW: {CARSON_BW/1e3:.0f} kHz"</span>)
+    print(<span class="code-string">f"FM Improvement Factor: {fm_improvement_factor_db(MOD_INDEX):.1f} dB"</span>)
+    print(<span class="code-string">"="</span> * <span class="code-number">50</span>)
+
+    <span class="code-comment"># Run simulation</span>
+    results = meo_fm_isl_simulation(duration=<span class="code-number">0.1</span>, snr_db=<span class="code-number">30</span>, doppler_hz=<span class="code-number">5000</span>)
+
+    print(<span class="code-string">f"\nSimulation Results:"</span>)
+    print(<span class="code-string">f"  Input C/N:  {results['input_snr_db']:.1f} dB"</span>)
+    print(<span class="code-string">f"  Output SNR: {results['output_snr_db']:.1f} dB"</span>)
+    print(<span class="code-string">f"  FM Gain:    {results['output_snr_db'] - results['input_snr_db']:.1f} dB"</span>)
+</pre>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 30px; padding: 20px; color: #64748b; font-size: 11px;">
+            <p>Broadcast FM MEO Inter-Satellite Link Block Diagram</p>
+            <p>Space-Based Signal Processing Chain | Python Implementation Ready</p>
+            <p style="margin-top: 10px; color: #ff6b35;">Constant Envelope | FM Improvement | Wideband Transmission</p>
+        </div>
+    </div>
+</body>
+</html>

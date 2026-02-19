@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-PSK MEO Space-Based Inter-Satellite Link Block Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .orbit-badge {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .orbit-badge span {
+            background: linear-gradient(135deg, #f59e0b, #06b6d4);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .diagram-container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tx-title { color: #4ade80; }
+        .channel-title { color: #fbbf24; }
+        .rx-title { color: #f87171; }
+        .space-title { color: #a78bfa; }
+
+        .blocks-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
+        .block {
+            background: linear-gradient(145deg, #2d3748, #1a202c);
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-width: 105px;
+            text-align: center;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .block:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        .block-small {
+            min-width: 90px;
+            padding: 8px 10px;
+        }
+        .tx-block { border-color: #4ade80; }
+        .tx-block:hover { box-shadow: 0 10px 30px rgba(74, 222, 128, 0.2); }
+        .channel-block { border-color: #fbbf24; }
+        .channel-block:hover { box-shadow: 0 10px 30px rgba(251, 191, 36, 0.2); }
+        .rx-block { border-color: #f87171; }
+        .rx-block:hover { box-shadow: 0 10px 30px rgba(248, 113, 113, 0.2); }
+        .space-block { border-color: #a78bfa; background: linear-gradient(145deg, #3d2d58, #1a1a2c); }
+        .space-block:hover { box-shadow: 0 10px 30px rgba(167, 139, 250, 0.2); }
+
+        .block-name {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        .block-detail {
+            font-size: 9px;
+            color: #94a3b8;
+        }
+        .python-func {
+            font-size: 8px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            margin-top: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .arrow {
+            font-size: 20px;
+            color: #64748b;
+            min-width: 20px;
+            text-align: center;
+        }
+        .signal-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+            margin-top: -3px;
+            font-style: italic;
+        }
+
+        /* Satellite SVG */
+        .satellite-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        /* Space visualization */
+        .space-vis {
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1a 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .space-vis::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(2px 2px at 20px 30px, white, transparent),
+                              radial-gradient(2px 2px at 40px 70px, white, transparent),
+                              radial-gradient(1px 1px at 90px 40px, white, transparent),
+                              radial-gradient(2px 2px at 130px 80px, white, transparent),
+                              radial-gradient(1px 1px at 160px 30px, white, transparent);
+            background-size: 200px 100px;
+            opacity: 0.3;
+        }
+        .earth-icon {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(180deg, #4ade80 0%, #2563eb 50%, #1e40af 100%);
+            border-radius: 80px 80px 0 0;
+            opacity: 0.6;
+        }
+        .orbit-path {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 60px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        /* Constellation */
+        .constellation {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .constellation-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            flex: 1;
+            min-width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .constellation-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        /* 8-PSK Constellation Diagram */
+        .psk8-constellation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+        .psk8-diagram {
+            position: relative;
+            width: 220px;
+            height: 220px;
+        }
+        .psk8-axis {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .psk8-axis-h {
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            transform: translateY(-50%);
+        }
+        .psk8-axis-v {
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            transform: translateX(-50%);
+        }
+        .psk8-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        .psk8-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: bold;
+            color: #000;
+        }
+        /* 8-PSK points at 0, 45, 90, 135, 180, 225, 270, 315 degrees */
+        .psk8-point-000 { top: 50%; left: 84%; background: #4ade80; }
+        .psk8-point-001 { top: 26%; left: 74%; background: #60a5fa; }
+        .psk8-point-011 { top: 16%; left: 50%; background: #8b5cf6; }
+        .psk8-point-010 { top: 26%; left: 26%; background: #ec4899; }
+        .psk8-point-110 { top: 50%; left: 16%; background: #f87171; }
+        .psk8-point-111 { top: 74%; left: 26%; background: #fbbf24; }
+        .psk8-point-101 { top: 84%; left: 50%; background: #fb923c; }
+        .psk8-point-100 { top: 74%; left: 74%; background: #a3e635; }
+
+        .psk8-phase {
+            position: absolute;
+            font-size: 8px;
+            color: #a78bfa;
+        }
+        .psk8-phase-000 { top: 50%; left: 92%; transform: translateY(-50%); }
+        .psk8-phase-001 { top: 20%; left: 80%; }
+        .psk8-phase-011 { top: 8%; left: 50%; transform: translateX(-50%); }
+        .psk8-phase-010 { top: 20%; left: 12%; }
+        .psk8-phase-110 { top: 50%; left: 2%; transform: translateY(-50%); }
+        .psk8-phase-111 { top: 80%; left: 12%; }
+        .psk8-phase-101 { top: 92%; left: 50%; transform: translateX(-50%); }
+        .psk8-phase-100 { top: 80%; left: 80%; }
+
+        .axis-label {
+            position: absolute;
+            font-size: 10px;
+            color: #64748b;
+        }
+        .axis-label-i { right: 2px; top: 48%; }
+        .axis-label-q { left: 48%; top: 2px; }
+        .axis-label-ni { left: 2px; top: 48%; }
+        .axis-label-nq { left: 48%; bottom: 2px; }
+
+        /* Python Code Section */
+        .code-section {
+            margin-top: 30px;
+        }
+        .code-block {
+            background: #0d1117;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .code-block pre {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #c9d1d9;
+        }
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-number { color: #79c0ff; }
+        .code-class { color: #ffa657; }
+
+        /* Parameters Table */
+        .params-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        .params-table th {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #00d4ff;
+        }
+        .params-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .params-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .legend-tx { background: #4ade80; }
+        .legend-channel { background: #fbbf24; }
+        .legend-rx { background: #f87171; }
+        .legend-space { background: #a78bfa; }
+
+        /* Link budget */
+        .link-budget {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(0, 212, 255, 0.1));
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+        .link-budget-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #a78bfa;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .budget-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+        }
+        .budget-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        .budget-label { color: #94a3b8; }
+        .budget-value { color: #fff; font-family: 'Courier New', monospace; }
+        .budget-positive { color: #4ade80; }
+        .budget-negative { color: #f87171; }
+
+        /* Subsection styling */
+        .subsection {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid;
+        }
+        .subsection-tx { border-left-color: #4ade80; }
+        .subsection-space { border-left-color: #a78bfa; }
+        .subsection-rx { border-left-color: #f87171; }
+        .subsection-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #94a3b8;
+        }
+
+        /* 8-PSK Advantage Box */
+        .advantage-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .advantage-title {
+            color: #f59e0b;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .advantage-list {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        /* IQ Diagram inline */
+        .iq-flow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(245, 158, 11, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 10px;
+        }
+        .iq-channel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            min-width: 80px;
+        }
+        .iq-label {
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 4px;
+        }
+
+        /* Warning box */
+        .warning-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(251, 191, 36, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .warning-title {
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        /* IF Architecture Box */
+        .if-arch-box {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .if-arch-title {
+            color: #60a5fa;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>8-PSK MEO Space-Based Inter-Satellite Link (ISL)</h1>
+    <p class="subtitle">8-ary Phase Shift Keying for Medium Earth Orbit Crosslink Communications</p>
+    <div class="orbit-badge">
+        <span>MEO ALTITUDE: 20,200 km | ISL RANGE: 10,000 - 45,000 km | 8-PSK: 3 bits/symbol | IF: 200 MHz</span>
+    </div>
+
+    <div class="diagram-container">
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-tx"></div>
+                <span>TX Spacecraft</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-space"></div>
+                <span>Space-Specific Processing</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-channel"></div>
+                <span>Space Channel</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-rx"></div>
+                <span>RX Spacecraft</span>
+            </div>
+        </div>
+
+        <!-- 8-PSK Advantage -->
+        <div class="advantage-box">
+            <div class="advantage-title">8-PSK Advantages for Space Communications</div>
+            <div class="advantage-list">
+                <strong>Spectral Efficiency:</strong> 3 bits/symbol (1.5x QPSK, 3x BPSK bandwidth efficiency) |
+                <strong>Constant Envelope:</strong> All symbols lie on unit circle, ideal for nonlinear SSPA/TWTA |
+                <strong>Higher Throughput:</strong> 50% more data rate than QPSK in same bandwidth |
+                <strong>Heritage:</strong> DVB-S2 (adaptive coding), Satellite backhaul, Deep space (high SNR links)
+            </div>
+        </div>
+
+        <!-- IF Architecture Note -->
+        <div class="if-arch-box">
+            <div class="if-arch-title">IF-Based Simulation Architecture (200 MHz IF)</div>
+            <div class="advantage-list">
+                <strong>Why IF-Based:</strong> Direct 26 GHz carrier simulation would require >52 GHz sample rate (Nyquist) |
+                <strong>TX Chain:</strong> Baseband -> IF (200 MHz) upconversion via quadrature modulation |
+                <strong>Channel Model:</strong> Applies 26 GHz carrier effects (Doppler, FSPL, phase noise) to IF signal |
+                <strong>RX Chain:</strong> IF (200 MHz) -> Baseband downconversion with LPF |
+                <strong>Sample Rate:</strong> 1 GHz (100 samples/symbol at 10 MSym/s) for accurate RF behavior
+            </div>
+        </div>
+
+        <!-- 8-PSK Trade-off Warning -->
+        <div class="warning-box">
+            <div class="warning-title">8-PSK Design Considerations</div>
+            <div class="advantage-list">
+                <strong>Higher Eb/N0 Required:</strong> ~3.5 dB penalty vs QPSK for same BER (14 dB vs 10.5 dB @ BER=10^-6) |
+                <strong>Phase Noise Sensitivity:</strong> Smaller phase separation (45 deg vs 90 deg) requires tighter phase noise spec (0.005 rad RMS) |
+                <strong>Use Case:</strong> Best for high SNR links where bandwidth is limited but power is available
+            </div>
+        </div>
+
+        <!-- TX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title tx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                TX SPACECRAFT - MEO Satellite 8-PSK Transmitter Chain (meo_8psk_transmitter)
+            </div>
+
+            <!-- Data Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">DATA LAYER - Source Encoding & FEC</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Data Source</div>
+                        <div class="block-detail">Telemetry/Payload</div>
+                        <div class="block-detail">Binary Stream</div>
+                        <div class="python-func">np.random.randint()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">LDPC Encoder</div>
+                        <div class="block-detail">Rate 3/4</div>
+                        <div class="block-detail">Adds Parity Bits</div>
+                        <div class="python-func">ldpc_encode()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">Block Interleaver</div>
+                        <div class="block-detail">64 Rows</div>
+                        <div class="block-detail">Burst Protection</div>
+                        <div class="python-func">block_interleave()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Scrambler</div>
+                        <div class="block-detail">LFSR PN Sequence</div>
+                        <div class="block-detail">32-bit Seed</div>
+                        <div class="python-func">scramble()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">8-PSK Modulator</div>
+                        <div class="block-detail">Gray Coded</div>
+                        <div class="block-detail">3 bits -> Symbol</div>
+                        <div class="python-func">psk8_modulate()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- I/Q Processing -->
+            <div class="iq-flow">
+                <span style="color: #94a3b8;">8-PSK Symbol Generation:</span>
+                <div class="iq-channel">
+                    <div class="iq-label">3-bit Group</div>
+                    <div>b2 b1 b0</div>
+                </div>
+                <span style="font-size: 16px;">-></span>
+                <div class="iq-channel">
+                    <div class="iq-label">Phase Index</div>
+                    <div>k = 0..7</div>
+                </div>
+                <span style="font-size: 16px;">-></span>
+                <div class="iq-channel">
+                    <div class="iq-label">Complex Symbol</div>
+                    <div>e^(j*k*pi/4)</div>
+                </div>
+                <span style="color: #64748b; margin-left: 10px;">-> PSK8_MAP[tuple(triplet)]</span>
+            </div>
+
+            <!-- Physical Layer -->
+            <div class="subsection subsection-tx">
+                <div class="subsection-title">PHYSICAL LAYER - Baseband & RF Processing</div>
+                <div class="blocks-row">
+                    <div class="block tx-block block-small">
+                        <div class="block-name">Upsampling</div>
+                        <div class="block-detail">100 sps</div>
+                        <div class="block-detail">Zero Insertion</div>
+                        <div class="python-func">[::SAMPLES_PER_SYMBOL]</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">RRC Filter</div>
+                        <div class="block-detail">alpha = 0.25</div>
+                        <div class="block-detail">12 Symbol Span</div>
+                        <div class="python-func">rrc_filter()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block tx-block block-small">
+                        <div class="block-name">RF Upconvert</div>
+                        <div class="block-detail">Baseband -> IF</div>
+                        <div class="block-detail">200 MHz IF</div>
+                        <div class="python-func">rf_upconvert()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">SSPA</div>
+                        <div class="block-detail">20W Output</div>
+                        <div class="block-detail">Space Qualified</div>
+                        <div class="python-func">TX_POWER_W=20</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">Parabolic Dish</div>
+                        <div class="block-detail">G = 42 dBi</div>
+                        <div class="python-func">TX_ANTENNA_GAIN_DBI</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RF Upconversion Detail -->
+            <div class="iq-flow">
+                <span style="color: #94a3b8;">Quadrature Upconversion:</span>
+                <div class="iq-channel">
+                    <div class="iq-label">I(t)</div>
+                    <div>Real Part</div>
+                </div>
+                <span>* cos(2*pi*f_IF*t)</span>
+                <span style="font-size: 16px;">-</span>
+                <div class="iq-channel">
+                    <div class="iq-label">Q(t)</div>
+                    <div>Imag Part</div>
+                </div>
+                <span>* sin(2*pi*f_IF*t)</span>
+                <span style="font-size: 16px;">=</span>
+                <div class="iq-channel">
+                    <div class="iq-label">RF Signal</div>
+                    <div>Real @ 200 MHz IF</div>
+                </div>
+            </div>
+            <div class="signal-label">Complex Baseband I/Q -> Real RF Signal @ 200 MHz IF -> (LO mix to 26 GHz for transmission)</div>
+        </div>
+
+        <!-- Space Channel Section -->
+        <div class="section">
+            <div class="section-title channel-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                MEO SPACE CHANNEL - Inter-Satellite Link Propagation (meo_space_channel_rf)
+            </div>
+
+            <!-- Space Visualization -->
+            <div class="space-vis">
+                <div class="orbit-path"></div>
+                <div class="earth-icon"></div>
+                <div class="blocks-row" style="justify-content: center; position: relative; z-index: 2;">
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#4ade80" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                    <div class="arrow" style="font-size: 16px;">-></div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Doppler Shift</div>
+                        <div class="block-detail">Hilbert Transform</div>
+                        <div class="block-detail">@ 26 GHz Carrier</div>
+                        <div class="python-func">hilbert() + exp()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">-></div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">Phase Noise</div>
+                        <div class="block-detail">Random Walk</div>
+                        <div class="block-detail">0.005 rad RMS</div>
+                        <div class="python-func">phase_noise()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">-></div>
+
+                    <div class="block channel-block block-small">
+                        <div class="block-name">AWGN</div>
+                        <div class="block-detail">Thermal Noise</div>
+                        <div class="block-detail">Based on Eb/N0</div>
+                        <div class="python-func">np.random.randn()</div>
+                    </div>
+                    <div class="arrow" style="font-size: 16px;">-></div>
+
+                    <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                        <rect x="18" y="18" width="14" height="14" rx="2"/>
+                        <line x1="5" y1="25" x2="18" y2="25"/>
+                        <line x1="32" y1="25" x2="45" y2="25"/>
+                        <rect x="2" y="20" width="6" height="10" rx="1"/>
+                        <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="signal-label">TX Satellite (MEO) -> RX Satellite (MEO) | Doppler calc @ 26 GHz, applied to IF signal | FSPL implicit in SNR</div>
+        </div>
+
+        <!-- RX Spacecraft Section -->
+        <div class="section">
+            <div class="section-title rx-title">
+                <svg class="satellite-icon" viewBox="0 0 50 50" fill="none" stroke="#f87171" stroke-width="1.5">
+                    <rect x="18" y="18" width="14" height="14" rx="2"/>
+                    <line x1="5" y1="25" x2="18" y2="25"/>
+                    <line x1="32" y1="25" x2="45" y2="25"/>
+                    <rect x="2" y="20" width="6" height="10" rx="1"/>
+                    <rect x="42" y="20" width="6" height="10" rx="1"/>
+                    <circle cx="25" cy="14" r="3"/>
+                    <line x1="25" y1="11" x2="25" y2="5"/>
+                </svg>
+                RX SPACECRAFT - MEO Satellite 8-PSK Receiver Chain (meo_8psk_receiver)
+            </div>
+
+            <!-- RF Front End -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">RF FRONT END - Antenna & Downconversion</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">High-Gain Ant</div>
+                        <div class="block-detail">Parabolic Dish</div>
+                        <div class="block-detail">G = 42 dBi</div>
+                        <div class="python-func">RX_ANTENNA_GAIN_DBI</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">RF Downconvert</div>
+                        <div class="block-detail">IF -> Baseband</div>
+                        <div class="block-detail">Quadrature Demod</div>
+                        <div class="python-func">rf_downconvert()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Low-Pass Filter</div>
+                        <div class="block-detail">Butterworth 5th</div>
+                        <div class="block-detail">Remove 2x IF</div>
+                        <div class="python-func">butter() + filtfilt()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Doppler Comp</div>
+                        <div class="block-detail">Known Doppler</div>
+                        <div class="block-detail">Freq Correction</div>
+                        <div class="python-func">apply_doppler_shift()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RF Downconversion Detail -->
+            <div class="iq-flow">
+                <span style="color: #94a3b8;">Quadrature Downconversion:</span>
+                <div class="iq-channel">
+                    <div class="iq-label">RF(t)</div>
+                    <div>@ 200 MHz IF</div>
+                </div>
+                <span style="font-size: 12px;">* 2*cos/sin</span>
+                <span style="font-size: 16px;">-></span>
+                <div class="iq-channel">
+                    <div class="iq-label">I_mixed + Q_mixed</div>
+                    <div>BB + 2*IF</div>
+                </div>
+                <span style="font-size: 16px;">-></span>
+                <div class="iq-channel">
+                    <div class="iq-label">LPF</div>
+                    <div>Remove 2*IF</div>
+                </div>
+                <span style="font-size: 16px;">-></span>
+                <div class="iq-channel">
+                    <div class="iq-label">I + jQ</div>
+                    <div>Complex BB</div>
+                </div>
+            </div>
+
+            <!-- Synchronization -->
+            <div class="subsection subsection-space">
+                <div class="subsection-title">SYNCHRONIZATION - Carrier & Timing Recovery</div>
+                <div class="blocks-row">
+                    <div class="block space-block block-small">
+                        <div class="block-name">8th Power PLL</div>
+                        <div class="block-detail">Carrier Recovery</div>
+                        <div class="block-detail">(Bypassed if known)</div>
+                        <div class="python-func">eighth_power_pll()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Matched Filter</div>
+                        <div class="block-detail">RRC alpha = 0.25</div>
+                        <div class="block-detail">12 Symbol Span</div>
+                        <div class="python-func">np.convolve(rrc)</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Downsample</div>
+                        <div class="block-detail">100 -> 1 sps</div>
+                        <div class="block-detail">Symbol Centers</div>
+                        <div class="python-func">[::SAMPLES_PER_SYMBOL]</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">AGC Normalize</div>
+                        <div class="block-detail">Unit Power</div>
+                        <div class="block-detail">Constellation Fit</div>
+                        <div class="python-func">/ sqrt(mean(|x|^2))</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detection & Decoding -->
+            <div class="subsection subsection-rx">
+                <div class="subsection-title">DETECTION & DECODING - Symbol Decision & FEC</div>
+                <div class="blocks-row">
+                    <div class="block rx-block block-small">
+                        <div class="block-name">8-PSK Demod</div>
+                        <div class="block-detail">Phase Sectors</div>
+                        <div class="block-detail">Hard Decision</div>
+                        <div class="python-func">psk8_demodulate()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Descrambler</div>
+                        <div class="block-detail">LFSR Sync</div>
+                        <div class="block-detail">Same Seed as TX</div>
+                        <div class="python-func">descramble()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">De-Interleaver</div>
+                        <div class="block-detail">Block De-Int</div>
+                        <div class="block-detail">64 Rows</div>
+                        <div class="python-func">block_deinterleave()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block space-block block-small">
+                        <div class="block-name">LDPC Decoder</div>
+                        <div class="block-detail">Rate 3/4</div>
+                        <div class="block-detail">Extract Data</div>
+                        <div class="python-func">ldpc_decode()</div>
+                    </div>
+                    <div class="arrow">-></div>
+
+                    <div class="block rx-block block-small">
+                        <div class="block-name">Data Sink</div>
+                        <div class="block-detail">Recovered Data</div>
+                        <div class="block-detail">BER Calculation</div>
+                        <div class="python-func">rx_bits</div>
+                    </div>
+                </div>
+            </div>
+            <div class="signal-label">RF @ 200 MHz IF -> Baseband I/Q -> Recovered Payload Data | Intermediate signals saved for analysis</div>
+        </div>
+
+        <!-- MEO Parameters and Link Budget -->
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">MEO Orbital Parameters</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>Altitude</td>
+                        <td>20,200 km</td>
+                        <td>GPS orbit (MEO_ALTITUDE)</td>
+                    </tr>
+                    <tr>
+                        <td>Earth Radius</td>
+                        <td>6,371 km</td>
+                        <td>EARTH_RADIUS</td>
+                    </tr>
+                    <tr>
+                        <td>Orbital Velocity</td>
+                        <td>~3.9 km/s</td>
+                        <td>sqrt(mu/r)</td>
+                    </tr>
+                    <tr>
+                        <td>ISL Range (sim)</td>
+                        <td>15,000 km</td>
+                        <td>Default distance_km</td>
+                    </tr>
+                    <tr>
+                        <td>Max Doppler</td>
+                        <td>50 kHz</td>
+                        <td>Default doppler_hz</td>
+                    </tr>
+                    <tr>
+                        <td>Propagation Delay</td>
+                        <td>~50 ms</td>
+                        <td>One-way @ 15,000 km</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">8-PSK Constellation (Gray Coded)</div>
+                <div class="psk8-constellation">
+                    <div class="psk8-diagram">
+                        <div class="psk8-axis psk8-axis-h"></div>
+                        <div class="psk8-axis psk8-axis-v"></div>
+                        <div class="psk8-circle"></div>
+                        <div class="psk8-point psk8-point-000">000</div>
+                        <div class="psk8-point psk8-point-001">001</div>
+                        <div class="psk8-point psk8-point-011">011</div>
+                        <div class="psk8-point psk8-point-010">010</div>
+                        <div class="psk8-point psk8-point-110">110</div>
+                        <div class="psk8-point psk8-point-111">111</div>
+                        <div class="psk8-point psk8-point-101">101</div>
+                        <div class="psk8-point psk8-point-100">100</div>
+                        <div class="psk8-phase psk8-phase-000">0 deg</div>
+                        <div class="psk8-phase psk8-phase-001">45 deg</div>
+                        <div class="psk8-phase psk8-phase-011">90 deg</div>
+                        <div class="psk8-phase psk8-phase-010">135 deg</div>
+                        <div class="psk8-phase psk8-phase-110">180 deg</div>
+                        <div class="psk8-phase psk8-phase-111">225 deg</div>
+                        <div class="psk8-phase psk8-phase-101">270 deg</div>
+                        <div class="psk8-phase psk8-phase-100">315 deg</div>
+                        <div class="axis-label axis-label-i">+I</div>
+                        <div class="axis-label axis-label-ni">-I</div>
+                        <div class="axis-label axis-label-q">+Q</div>
+                        <div class="axis-label axis-label-nq">-Q</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">8-PSK Symbol Mapping (PSK8_MAP)</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Bits</th>
+                        <th>Phase</th>
+                        <th>Symbol exp(j*k*pi/4)</th>
+                    </tr>
+                    <tr>
+                        <td style="color: #4ade80;">(0,0,0)</td>
+                        <td>0 deg (k=0)</td>
+                        <td>+1 + j0</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #60a5fa;">(0,0,1)</td>
+                        <td>45 deg (k=1)</td>
+                        <td>+0.707 + j0.707</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8b5cf6;">(0,1,1)</td>
+                        <td>90 deg (k=2)</td>
+                        <td>0 + j1</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #ec4899;">(0,1,0)</td>
+                        <td>135 deg (k=3)</td>
+                        <td>-0.707 + j0.707</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #f87171;">(1,1,0)</td>
+                        <td>180 deg (k=4)</td>
+                        <td>-1 + j0</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #fbbf24;">(1,1,1)</td>
+                        <td>225 deg (k=5)</td>
+                        <td>-0.707 - j0.707</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #fb923c;">(1,0,1)</td>
+                        <td>270 deg (k=6)</td>
+                        <td>0 - j1</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #a3e635;">(1,0,0)</td>
+                        <td>315 deg (k=7)</td>
+                        <td>+0.707 - j0.707</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="constellation">
+            <div class="constellation-box">
+                <div class="constellation-title">System Parameters (from 8psk_mod_tx_rx_sim.py)</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                        <th>Variable</th>
+                    </tr>
+                    <tr>
+                        <td>Carrier Frequency</td>
+                        <td>26 GHz (Ka-Band)</td>
+                        <td>CARRIER_FREQ</td>
+                    </tr>
+                    <tr>
+                        <td>IF Frequency</td>
+                        <td>200 MHz</td>
+                        <td>IF_FREQUENCY</td>
+                    </tr>
+                    <tr>
+                        <td>Sample Rate</td>
+                        <td>1 GHz</td>
+                        <td>SAMPLE_RATE</td>
+                    </tr>
+                    <tr>
+                        <td>Samples per Symbol</td>
+                        <td>100</td>
+                        <td>SAMPLES_PER_SYMBOL</td>
+                    </tr>
+                    <tr>
+                        <td>Symbol Rate</td>
+                        <td>10 MSym/s</td>
+                        <td>SYMBOL_RATE</td>
+                    </tr>
+                    <tr>
+                        <td>Bit Rate (uncoded)</td>
+                        <td>30 Mbps</td>
+                        <td>BIT_RATE</td>
+                    </tr>
+                    <tr>
+                        <td>Bits per Symbol</td>
+                        <td>3</td>
+                        <td>BITS_PER_SYMBOL</td>
+                    </tr>
+                    <tr>
+                        <td>Roll-off Factor</td>
+                        <td>0.25</td>
+                        <td>ROLLOFF</td>
+                    </tr>
+                    <tr>
+                        <td>Filter Span</td>
+                        <td>12 symbols</td>
+                        <td>FILTER_SPAN</td>
+                    </tr>
+                </table>
+                <table class="params-table" style="margin-top: 10px;">
+                    <tr>
+                        <th>Link Budget Parameter</th>
+                        <th>Value</th>
+                        <th>Variable</th>
+                    </tr>
+                    <tr>
+                        <td>TX Power (SSPA)</td>
+                        <td>20 W</td>
+                        <td>TX_POWER_W</td>
+                    </tr>
+                    <tr>
+                        <td>TX Antenna Gain</td>
+                        <td>42 dBi</td>
+                        <td>TX_ANTENNA_GAIN_DBI</td>
+                    </tr>
+                    <tr>
+                        <td>RX Antenna Gain</td>
+                        <td>42 dBi</td>
+                        <td>RX_ANTENNA_GAIN_DBI</td>
+                    </tr>
+                    <tr>
+                        <td>System Noise Temp</td>
+                        <td>350 K</td>
+                        <td>SYSTEM_NOISE_TEMP_K</td>
+                    </tr>
+                    <tr>
+                        <td>Line Loss</td>
+                        <td>1.5 dB</td>
+                        <td>LINE_LOSS_DB</td>
+                    </tr>
+                    <tr>
+                        <td>FEC Code Rate</td>
+                        <td>3/4 LDPC</td>
+                        <td>code_rate=0.75</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">Intermediate Signals (intermediate_signals dict)</div>
+                <table class="params-table">
+                    <tr>
+                        <th>Signal Name</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                    </tr>
+                    <tr>
+                        <td>rf_input</td>
+                        <td>RF signal at IF (200 MHz)</td>
+                        <td>Real ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>after_downconv</td>
+                        <td>After RF down-conversion</td>
+                        <td>Complex ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>after_lpf</td>
+                        <td>After low-pass filtering</td>
+                        <td>Complex ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>after_doppler_comp</td>
+                        <td>After Doppler compensation</td>
+                        <td>Complex ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>tx_baseband</td>
+                        <td>TX complex baseband</td>
+                        <td>Complex ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>tx_rf</td>
+                        <td>TX RF signal at IF</td>
+                        <td>Real ndarray</td>
+                    </tr>
+                    <tr>
+                        <td>time</td>
+                        <td>Time vector</td>
+                        <td>ndarray</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="constellation-box">
+                <div class="constellation-title">8-PSK Mathematical Definition</div>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px;">
+                    <div style="margin-bottom: 10px;"><strong>Complex Baseband Symbol:</strong></div>
+                    <div style="color: #f59e0b;">s_k = exp(j * k * pi/4), k in {0,1,...,7}</div>
+                    <div style="margin: 12px 0 8px;"><strong>RF Upconversion (Quadrature Mod):</strong></div>
+                    <div style="color: #60a5fa;">RF(t) = I(t)*cos(2*pi*f_IF*t) - Q(t)*sin(2*pi*f_IF*t)</div>
+                    <div style="margin: 12px 0 8px;"><strong>RF Downconversion:</strong></div>
+                    <div style="color: #4ade80;">I(t) = LPF{RF(t) * 2*cos(2*pi*f_IF*t)}</div>
+                    <div style="color: #4ade80;">Q(t) = LPF{RF(t) * -2*sin(2*pi*f_IF*t)}</div>
+                    <div style="margin: 12px 0 8px;"><strong>Symbol Energy:</strong></div>
+                    <div style="color: #fbbf24;">E_s = 3*E_b (3 bits/symbol)</div>
+                    <div style="margin: 12px 0 8px;"><strong>BER (AWGN, approx):</strong></div>
+                    <div style="color: #a78bfa;">P_e ~ (2/3)*erfc(sqrt(E_s/N0)*sin(pi/8))</div>
+                    <div style="margin: 12px 0 8px;"><strong>Min. Symbol Distance:</strong></div>
+                    <div style="color: #ec4899;">d_min = 2*sin(pi/8) ~ 0.765</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Link Budget -->
+        <div class="link-budget">
+            <div class="link-budget-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2">
+                    <path d="M12 20V10M18 20V4M6 20v-4"/>
+                </svg>
+                MEO ISL Link Budget Analysis - 8-PSK (calculate_link_budget @ 15,000 km)
+            </div>
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">TX Power (SSPA)</span>
+                        <span class="budget-value budget-positive">+13.0 dBW (20W)</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+42.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">TX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.5 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">EIRP</span>
+                        <span class="budget-value budget-positive">+53.5 dBW</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Free Space Path Loss @ 26 GHz</span>
+                        <span class="budget-value budget-negative">~212 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Pointing Loss</span>
+                        <span class="budget-value budget-negative">-0.5 dB</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="budget-row">
+                        <span class="budget-label">RX Antenna Gain</span>
+                        <span class="budget-value budget-positive">+42.0 dBi</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">RX Line Loss</span>
+                        <span class="budget-value budget-negative">-1.5 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">System Noise Temp (350K)</span>
+                        <span class="budget-value">25.4 dBK</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">G/T</span>
+                        <span class="budget-value budget-positive">+16.6 dB/K</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">C/N0 (calculate_link_budget)</span>
+                        <span class="budget-value budget-positive">~96 dBHz</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Eb/N0 (@ 30 Mbps)</span>
+                        <span class="budget-value budget-positive">~21 dB</span>
+                    </div>
+                    <div class="budget-row">
+                        <span class="budget-label">Required Eb/N0 (8-PSK + LDPC)</span>
+                        <span class="budget-value">~7.0 dB</span>
+                    </div>
+                    <div class="budget-row" style="background: rgba(74, 222, 128, 0.1); margin-top: 5px; padding: 8px; border-radius: 5px;">
+                        <span class="budget-label"><strong>Link Margin</strong></span>
+                        <span class="budget-value budget-positive"><strong>~14 dB</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Python Implementation -->
+        <div class="section code-section">
+            <div class="section-title" style="color: #00d4ff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+                </svg>
+                Python Implementation - 8psk_mod_tx_rx_sim.py Key Functions
+            </div>
+            <div class="code-block">
+                <pre><span class="code-comment">"""
+8-PSK MEO Inter-Satellite Link (ISL) System Implementation
+Space-based signal processing chain for Medium Earth Orbit communications
+8-ary Phase Shift Keying with LDPC FEC
+
+RF System Architecture:
+- Carrier Frequency: 26 GHz (Ka-band)
+- Sample Rate: 1 GHz (supports 200 MHz IF with 5x oversampling)
+- Intermediate Frequency: 200 MHz
+- Symbol Rate: 10 MSym/s (30 Mbps with 8-PSK)
+
+The simulation uses IF-based representation where:
+- Transmitter: Baseband -> IF (200 MHz) upconversion
+- Channel: Applies 26 GHz carrier effects (Doppler, FSPL, phase noise)
+- Receiver: IF (200 MHz) -> Baseband downconversion
+"""</span>
+
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">from</span> scipy <span class="code-keyword">import</span> signal
+<span class="code-keyword">from</span> scipy.signal <span class="code-keyword">import</span> butter, filtfilt, hilbert
+<span class="code-keyword">from</span> scipy.constants <span class="code-keyword">import</span> c, k  <span class="code-comment"># speed of light, Boltzmann</span>
+
+<span class="code-comment"># ============== RF SYSTEM PARAMETERS ==============</span>
+<span class="code-class">CARRIER_FREQ</span> = <span class="code-number">26e9</span>             <span class="code-comment"># 26 GHz Ka-band</span>
+<span class="code-class">SYMBOL_RATE</span> = <span class="code-number">10e6</span>              <span class="code-comment"># 10 MSym/s</span>
+<span class="code-class">BITS_PER_SYMBOL</span> = <span class="code-number">3</span>             <span class="code-comment"># 8-PSK: 3 bits per symbol</span>
+<span class="code-class">SAMPLES_PER_SYMBOL</span> = <span class="code-number">100</span>        <span class="code-comment"># Oversampling for RF simulation</span>
+<span class="code-class">SAMPLE_RATE</span> = <span class="code-class">SYMBOL_RATE</span> * <span class="code-class">SAMPLES_PER_SYMBOL</span>  <span class="code-comment"># 1 GHz</span>
+<span class="code-class">IF_FREQUENCY</span> = <span class="code-number">200e6</span>            <span class="code-comment"># 200 MHz IF</span>
+<span class="code-class">ROLLOFF</span> = <span class="code-number">0.25</span>                  <span class="code-comment"># RRC roll-off factor</span>
+<span class="code-class">FILTER_SPAN</span> = <span class="code-number">12</span>                 <span class="code-comment"># symbols</span>
+
+<span class="code-comment"># ============== RF UP/DOWN CONVERSION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">rf_upconvert</span>(baseband_signal, sample_rate=SAMPLE_RATE, if_freq=IF_FREQUENCY):
+    <span class="code-string">"""Up-convert complex baseband signal to IF (200 MHz)
+
+    Performs quadrature modulation:
+    RF(t) = I(t)*cos(2*pi*f_IF*t) - Q(t)*sin(2*pi*f_IF*t)
+    """</span>
+    t = np.arange(len(baseband_signal)) / sample_rate
+    i_component = np.real(baseband_signal)
+    q_component = np.imag(baseband_signal)
+    cos_carrier = np.cos(<span class="code-number">2</span> * np.pi * if_freq * t)
+    sin_carrier = np.sin(<span class="code-number">2</span> * np.pi * if_freq * t)
+    rf_signal = i_component * cos_carrier - q_component * sin_carrier
+    <span class="code-keyword">return</span> rf_signal
+
+<span class="code-keyword">def</span> <span class="code-function">rf_downconvert</span>(rf_signal, sample_rate=SAMPLE_RATE, if_freq=IF_FREQUENCY):
+    <span class="code-string">"""Down-convert IF signal (200 MHz) to complex baseband
+
+    I(t) = LPF{RF(t) * 2*cos(2*pi*f_IF*t)}
+    Q(t) = LPF{RF(t) * -2*sin(2*pi*f_IF*t)}
+    """</span>
+    t = np.arange(len(rf_signal)) / sample_rate
+    cos_carrier = <span class="code-number">2</span> * np.cos(<span class="code-number">2</span> * np.pi * if_freq * t)
+    sin_carrier = -<span class="code-number">2</span> * np.sin(<span class="code-number">2</span> * np.pi * if_freq * t)
+    i_mixed = rf_signal * cos_carrier
+    q_mixed = rf_signal * sin_carrier
+    <span class="code-comment"># Low-pass filter to remove double-frequency component</span>
+    nyq = sample_rate / <span class="code-number">2</span>
+    lpf_cutoff = SYMBOL_RATE * (<span class="code-number">1</span> + ROLLOFF) * <span class="code-number">1.1</span>
+    b, a = butter(<span class="code-number">5</span>, lpf_cutoff / nyq, btype=<span class="code-string">'low'</span>)
+    i_baseband = filtfilt(b, a, i_mixed)
+    q_baseband = filtfilt(b, a, q_mixed)
+    <span class="code-keyword">return</span> i_baseband + <span class="code-number">1j</span> * q_baseband
+
+<span class="code-comment"># ============== TRANSMITTER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_8psk_transmitter</span>(data_bits):
+    <span class="code-string">"""Complete MEO 8-PSK satellite transmitter chain
+
+    Signal processing flow:
+    1. LDPC encoding (rate 3/4)
+    2. Block interleaving for burst error protection
+    3. Scrambling with LFSR sequence
+    4. 8-PSK modulation (Gray-coded)
+    5. Upsampling and RRC pulse shaping
+    6. RF up-conversion to IF (200 MHz)
+
+    Returns: rf_signal, baseband_signal, symbols, rrc, tx_params
+    """</span>
+    encoded = ldpc_encode(data_bits, code_rate=<span class="code-number">0.75</span>)
+    interleaved = block_interleave(encoded)
+    scrambled = scramble(interleaved)
+    symbols = psk8_modulate(scrambled)
+    <span class="code-comment"># Upsampling and pulse shaping</span>
+    upsampled = np.zeros(len(symbols) * SAMPLES_PER_SYMBOL, dtype=complex)
+    upsampled[::SAMPLES_PER_SYMBOL] = symbols
+    rrc = rrc_filter(FILTER_SPAN * SAMPLES_PER_SYMBOL + <span class="code-number">1</span>, ROLLOFF, SAMPLES_PER_SYMBOL)
+    shaped = np.convolve(upsampled, rrc, mode=<span class="code-string">'same'</span>)
+    baseband_signal = shaped.copy()
+    rf_signal = rf_upconvert(shaped)
+    <span class="code-keyword">return</span> rf_signal, baseband_signal, symbols, rrc, tx_params
+
+<span class="code-comment"># ============== RECEIVER ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_8psk_receiver</span>(rf_signal, rrc, num_symbols, num_info_bits, scrambled_len, doppler_hz=<span class="code-number">0</span>):
+    <span class="code-string">"""Complete MEO 8-PSK satellite receiver chain
+
+    Signal processing flow:
+    1. RF down-conversion from IF to complex baseband
+    2. Low-pass filtering to remove out-of-band noise
+    3. Doppler compensation
+    4. Carrier recovery (8th power PLL) - bypassed if Doppler known
+    5. Matched filtering (RRC)
+    6. Symbol timing and downsampling
+    7. 8-PSK demodulation
+    8. Descrambling, de-interleaving, LDPC decoding
+
+    Returns: decoded_bits, rx_symbols, intermediate_signals
+    """</span>
+    <span class="code-comment"># RF down-conversion from IF (200 MHz) to complex baseband</span>
+    baseband_after_downconv = rf_downconvert(rf_signal)
+    <span class="code-comment"># Low-pass filter</span>
+    nyq = SAMPLE_RATE / <span class="code-number">2</span>
+    b, a = butter(<span class="code-number">5</span>, SYMBOL_RATE * (<span class="code-number">1</span> + ROLLOFF) / nyq, btype=<span class="code-string">'low'</span>)
+    baseband_after_lpf = filtfilt(b, a, baseband_after_downconv)
+    <span class="code-comment"># Doppler compensation</span>
+    <span class="code-keyword">if</span> doppler_hz != <span class="code-number">0</span>:
+        baseband_after_doppler = apply_doppler_shift(baseband_after_lpf, -doppler_hz, SAMPLE_RATE)
+    <span class="code-comment"># Store intermediate signals for analysis</span>
+    intermediate_signals = {
+        <span class="code-string">'rf_input'</span>: rf_signal,
+        <span class="code-string">'after_downconv'</span>: baseband_after_downconv,
+        <span class="code-string">'after_lpf'</span>: baseband_after_lpf,
+        <span class="code-string">'after_doppler_comp'</span>: baseband_after_doppler,
+    }
+    <span class="code-comment"># ... matched filtering, downsampling, demodulation, decoding ...</span>
+    <span class="code-keyword">return</span> decoded[:num_info_bits], rx_symbols, intermediate_signals
+
+<span class="code-comment"># ============== MAIN SIMULATION ==============</span>
+
+<span class="code-keyword">def</span> <span class="code-function">meo_8psk_isl_simulation</span>(num_bits=<span class="code-number">90000</span>, distance_km=<span class="code-number">15000</span>, doppler_hz=<span class="code-number">50000</span>):
+    <span class="code-string">"""MEO 8-PSK ISL TX and RX frontend system simulation"""</span>
+    tx_rf, tx_baseband, tx_symbols, rrc, tx_params = meo_8psk_transmitter(tx_bits)
+    rx_rf = meo_space_channel_rf(tx_rf, distance_km, doppler_hz, budget[<span class="code-string">'Eb_N0_dB'</span>])
+    rx_bits, rx_symbols, intermediate_signals = meo_8psk_receiver(rx_rf, rrc, ...)
+    <span class="code-keyword">return</span> results
+
+<span class="code-keyword">if</span> __name__ == <span class="code-string">"__main__"</span>:
+    results = meo_8psk_isl_simulation(num_bits=<span class="code-number">90000</span>, distance_km=<span class="code-number">15000</span>, doppler_hz=<span class="code-number">50000</span>)
+</pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
